@@ -59,7 +59,7 @@ func overwriteWithEnv(flags *Config) {
 }
 
 func getAddress(current string) string {
-	rawAddress, ok := os.LookupEnv("ADDRESS")
+	rawAddress, ok := os.LookupEnv("RUN_ADDRESS")
 	if ok {
 		return rawAddress
 	}
