@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"flag"
@@ -11,6 +11,8 @@ type Config struct {
 	DBDsn      string
 	AccrualURL string
 }
+
+var ServerConfig *Config = getConfig()
 
 func getConfig() *Config {
 	addressFlag := flag.String(
@@ -53,7 +55,7 @@ func overwriteWithEnv(flags *Config) {
 	flags.Addr = getAddress(flags.Addr)
 	flags.IsGzip = isGzip(flags.IsGzip)
 	flags.DBDsn = getDBDsn(flags.DBDsn)
-	flags.AccrualURL = getAccrualUrl(flags.AccrualURL)
+	flags.AccrualURL = getAccrualURL(flags.AccrualURL)
 }
 
 func getAddress(current string) string {
@@ -86,7 +88,7 @@ func getDBDsn(current string) string {
 	return current
 }
 
-func getAccrualUrl(current string) string {
+func getAccrualURL(current string) string {
 	raw, ok := os.LookupEnv("ACCRUAL_SYSTEM_ADDRESS")
 	if ok {
 		return raw
