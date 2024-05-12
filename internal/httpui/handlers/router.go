@@ -14,8 +14,6 @@ func GetRouter() chi.Router {
 func registerRoutes(router chi.Router) {
 	router.Head("/", HeadHandler)
 
-	// TODO auth routes
-
 	router.Get("/api/user/withdrawals", TempHandler().ServeHTTP)
 	router.Get("/api/user/balance", TempHandler().ServeHTTP)
 	router.Get("/api/user/orders", TempHandler().ServeHTTP)
