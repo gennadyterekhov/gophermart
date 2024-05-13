@@ -8,12 +8,13 @@ func RunMigrations(connection *sql.DB) {
 	createTableUsers(connection)
 	createTableOrders(connection)
 	createTableBalances(connection)
+	createTableWithdrawals(connection)
 }
 
 func createTableUsers(connection *sql.DB) {
 	createTable := `create table if not exists users
 	(
-		id serial,
+		id serial not null primary key,
 		login varchar(255) unique not null,
 		password varchar(255) not null
 	);`
@@ -24,14 +25,13 @@ func createTableUsers(connection *sql.DB) {
 }
 
 func createTableOrders(connection *sql.DB) {
-	createTable := `create table if not exists users
+	createTable := `create table if not exists orders
 	(
-		id serial,
-		user_id references users(id),
+		number varchar(64) unique not null primary key,
+		user_id int references users(id),
 		status varchar(255) not null,
-		number varchar(64) not null,
 		accrual int default null,
-		uploaded_at datetime not null
+		uploaded_at timestamp with time zone not null default now()
 	);`
 	_, err := connection.Exec(createTable)
 	if err != nil {
@@ -40,12 +40,26 @@ func createTableOrders(connection *sql.DB) {
 }
 
 func createTableBalances(connection *sql.DB) {
-	createTable := `create table if not exists users
+	createTable := `create table if not exists balances
 	(
-		id serial,
-		user_id references users(id),
+		id serial not null primary key,
+		user_id int references users(id),
 		current int not null,
 		withdrawn int not null
+	);`
+	_, err := connection.Exec(createTable)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func createTableWithdrawals(connection *sql.DB) {
+	createTable := `create table if not exists withdrawals
+	(
+		id serial not null primary key,
+		order_number varchar(64) references orders(number) not null,
+    	total_sum int not null,
+		processed_at timestamp with time zone not null
 	);`
 	_, err := connection.Exec(createTable)
 	if err != nil {
