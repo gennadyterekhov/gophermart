@@ -44,8 +44,8 @@ func createTableBalances(connection *sql.DB) {
 	(
 		id serial,
 		user_id references users(id),
-		current double precision not null,
-		withdrawn double precision not null
+		current int not null,
+		withdrawn int not null
 	);`
 	_, err := connection.Exec(createTable)
 	if err != nil {
