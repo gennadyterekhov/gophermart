@@ -3,9 +3,9 @@ package storage
 import (
 	"database/sql"
 
-	"github.com/gennadyterekhov/gophermart/internal/storage/migration"
-
 	"github.com/gennadyterekhov/gophermart/internal/config"
+
+	"github.com/gennadyterekhov/gophermart/internal/storage/migration"
 
 	"github.com/gennadyterekhov/gophermart/internal/logger"
 )
@@ -14,12 +14,16 @@ type DBStorage struct {
 	DBConnection *sql.DB
 }
 
-var Connection = CreateDBStorage()
+var Connection = CreateDefaultDBStorage()
 
-func CreateDBStorage() *DBStorage {
-	conn, err := sql.Open("pgx", config.ServerConfig.DBDsn)
+func CreateDefaultDBStorage() *DBStorage {
+	return createDBStorage(config.ServerConfig.DBDsn)
+}
+
+func createDBStorage(dsn string) *DBStorage {
+	conn, err := sql.Open("pgx", dsn)
 	if err != nil {
-		logger.ZapSugarLogger.Panicln("could not connect to db using dsn: " + config.ServerConfig.DBDsn)
+		logger.ZapSugarLogger.Panicln("could not connect to db using dsn: " + dsn)
 	}
 
 	migration.RunMigrations(conn)
