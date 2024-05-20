@@ -24,3 +24,4 @@ vendor/
 
 .env
 cmd/gophermart/server
+.temp
