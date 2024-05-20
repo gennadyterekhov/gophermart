@@ -2,8 +2,6 @@ package middleware
 
 import (
 	"net/http"
-
-	"github.com/gennadyterekhov/gophermart/internal/httpui/middleware/compressor"
 )
 
 type Middleware func(http.Handler) http.Handler
@@ -16,7 +14,6 @@ func CommonConveyor(h http.Handler, middlewares ...Middleware) http.Handler {
 
 func getCommonMiddlewares() []Middleware {
 	return []Middleware{
-		compressor.GzipCompressor,
 		ContentType,
 	}
 }

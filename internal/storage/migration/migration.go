@@ -7,7 +7,6 @@ import (
 func RunMigrations(connection *sql.DB) {
 	createTableUsers(connection)
 	createTableOrders(connection)
-	createTableBalances(connection)
 	createTableWithdrawals(connection)
 }
 
@@ -39,25 +38,12 @@ func createTableOrders(connection *sql.DB) {
 	}
 }
 
-func createTableBalances(connection *sql.DB) {
-	createTable := `create table if not exists balances
-	(
-		id serial not null primary key,
-		user_id int references users(id),
-		current int not null,
-		withdrawn int not null
-	);`
-	_, err := connection.Exec(createTable)
-	if err != nil {
-		panic(err)
-	}
-}
-
 func createTableWithdrawals(connection *sql.DB) {
 	createTable := `create table if not exists withdrawals
 	(
 		id serial not null primary key,
-		order_number varchar(64) references orders(number) not null,
+		user_id int references users(id),
+		order_number int not null,
     	total_sum int not null,
 		processed_at timestamp with time zone not null
 	);`

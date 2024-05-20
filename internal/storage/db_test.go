@@ -15,22 +15,17 @@ const TestDBDsn = "host=localhost user=gophermart_user password=gophermart_pass 
 
 func initDB() (*sql.DB, *sql.Tx) {
 	config.ServerConfig.DBDsn = TestDBDsn
-	dbConnection, err := sql.Open("pgx", TestDBDsn)
+	Connection = createDBStorage(TestDBDsn)
+
+	transaction, err := Connection.DBConnection.BeginTx(context.Background(), nil)
 	if err != nil {
 		panic(err)
 	}
 
-	transaction, err := dbConnection.BeginTx(context.Background(), nil)
-	if err != nil {
-		panic(err)
-	}
-
-	return dbConnection, transaction
+	return Connection.DBConnection, transaction
 }
 
 func TestDbExists(t *testing.T) {
-	t.Skip("only manual use because depends on host")
-
 	dbConnection, tx := initDB()
 	defer dbConnection.Close()
 	defer tx.Rollback()
@@ -51,10 +46,6 @@ func TestDbTableExists(t *testing.T) {
 	assert.NoError(t, err)
 
 	rawSQLString = "select * from balances limit 1;"
-	_, err = tx.Exec(rawSQLString)
-	assert.NoError(t, err)
-
-	rawSQLString = "select * from orders limit 1;"
 	_, err = tx.Exec(rawSQLString)
 	assert.NoError(t, err)
 
