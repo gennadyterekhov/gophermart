@@ -8,6 +8,7 @@ import (
 	"github.com/gennadyterekhov/gophermart/internal/storage/migration"
 
 	"github.com/gennadyterekhov/gophermart/internal/logger"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 type DBStorage struct {
@@ -17,13 +18,13 @@ type DBStorage struct {
 var Connection = CreateDefaultDBStorage()
 
 func CreateDefaultDBStorage() *DBStorage {
-	return createDBStorage(config.ServerConfig.DBDsn)
+	return CreateDBStorage(config.ServerConfig.DBDsn)
 }
 
-func createDBStorage(dsn string) *DBStorage {
+func CreateDBStorage(dsn string) *DBStorage {
 	conn, err := sql.Open("pgx", dsn)
 	if err != nil {
-		logger.ZapSugarLogger.Panicln("could not connect to db using dsn: " + dsn)
+		logger.ZapSugarLogger.Panicln("could not connect to db using dsn: " + dsn + " " + err.Error())
 	}
 
 	migration.RunMigrations(conn)

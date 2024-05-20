@@ -1,7 +1,6 @@
 package config
 
 import (
-	"flag"
 	"os"
 )
 
@@ -15,30 +14,37 @@ type Config struct {
 var ServerConfig *Config = getConfig()
 
 func getConfig() *Config {
-	addressFlag := flag.String(
-		"a",
-		"localhost:8080",
-		"[address] Net address host:port without protocol",
-	)
-	DBDsnFlag := flag.String(
-		"d",
-		"",
-		"[db dsn] format: `host=%s user=%s password=%s dbname=%s sslmode=%s`",
-	)
-	accrualSystemAddressFlag := flag.String(
-		"r",
-		"",
-		"[accRual_system_address] ",
-	)
+	// TODO fix issue-17 https://github.com/gennadyterekhov/gophermart/issues/17
+	//addressFlag := flag.String(
+	//	"a",
+	//	"localhost:8080",
+	//	"[address] Net address host:port without protocol",
+	//)
+	//DBDsnFlag := flag.String(
+	//	"d",
+	//	"",
+	//	"[db dsn] format: `host=%s user=%s password=%s dbname=%s sslmode=%s`",
+	//)
+	//accrualSystemAddressFlag := flag.String(
+	//	"r",
+	//	"",
+	//	"[accRual_system_address] ",
+	//)
 
-	flag.Parse()
+	// this breaks tests so i hardcoded defaults
+	// flag.Parse()
+	//flags := Config{
+	//	Addr:       *addressFlag,
+	//	DBDsn:      *DBDsnFlag,
+	//	AccrualURL: *accrualSystemAddressFlag,
+	//}
+	const testDBDsn = "host=localhost user=gophermart_user password=gophermart_pass dbname=gophermart_db_test sslmode=disable"
 
 	flags := Config{
-		Addr:       *addressFlag,
-		DBDsn:      *DBDsnFlag,
-		AccrualURL: *accrualSystemAddressFlag,
+		Addr:       "localhost:8080",
+		DBDsn:      testDBDsn,
+		AccrualURL: "",
 	}
-
 	overwriteWithEnv(&flags)
 
 	return &flags
