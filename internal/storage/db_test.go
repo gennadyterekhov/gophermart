@@ -11,11 +11,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const TestDBDsn = "host=localhost user=gophermart_user password=gophermart_pass dbname=gophermart_db_test sslmode=disable"
-
+// needed to avoid import cycle
 func initDB() (*sql.DB, *sql.Tx) {
-	config.ServerConfig.DBDsn = TestDBDsn
-	Connection = createDBStorage(TestDBDsn)
+	const testDBDsn = "host=localhost user=gophermart_user password=gophermart_pass dbname=gophermart_db_test sslmode=disable"
+	config.ServerConfig.DBDsn = testDBDsn
+	Connection = CreateDBStorage(testDBDsn)
 
 	transaction, err := Connection.DBConnection.BeginTx(context.Background(), nil)
 	if err != nil {
@@ -35,8 +35,6 @@ func TestDbExists(t *testing.T) {
 }
 
 func TestDbTableExists(t *testing.T) {
-	t.Skip("only manual use because depends on host")
-
 	dbConnection, tx := initDB()
 	defer dbConnection.Close()
 	defer tx.Rollback()
@@ -45,7 +43,7 @@ func TestDbTableExists(t *testing.T) {
 	_, err := tx.Exec(rawSQLString)
 	assert.NoError(t, err)
 
-	rawSQLString = "select * from balances limit 1;"
+	rawSQLString = "select * from orders limit 1;"
 	_, err = tx.Exec(rawSQLString)
 	assert.NoError(t, err)
 
