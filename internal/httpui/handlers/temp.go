@@ -11,7 +11,7 @@ func temp(res http.ResponseWriter, req *http.Request) {
 }
 
 func TempHandler() http.Handler {
-	return middleware.CommonConveyor(
+	return middleware.WithAuth(
 		http.HandlerFunc(temp),
 	)
 }
