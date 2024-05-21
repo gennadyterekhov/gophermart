@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gennadyterekhov/gophermart/internal/httpui/middleware"
@@ -21,18 +22,22 @@ func RegisterHandler() http.Handler {
 
 func register(res http.ResponseWriter, req *http.Request) {
 	var err error
-	reqDto, errCode, err := getRequestDto(req)
+	reqDto, err := getRequestDto(req)
 	if err != nil {
-		http.Error(res, err.Error(), errCode)
+		http.Error(res, err.Error(), http.StatusBadRequest)
 	}
 
 	resDto, err := auth.Register(req.Context(), reqDto)
-
-	resBody := serializers.Register(resDto)
 	if err != nil {
-		http.Error(res, err.Error(), 400)
+		status := http.StatusInternalServerError
+
+		if err.Error() == auth.ErrorNotUniqueLogin {
+			status = http.StatusConflict
+		}
+		http.Error(res, err.Error(), status)
 		return
 	}
+	resBody := serializers.Register(resDto)
 
 	_, err = res.Write([]byte(resBody))
 	if err != nil {
@@ -42,11 +47,17 @@ func register(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusOK)
 }
 
-func getRequestDto(req *http.Request) (*requests.Register, int, error) {
-	validate(req)
-	return nil, 0, nil
-}
+func getRequestDto(req *http.Request) (*requests.Register, error) {
+	requestDto := &requests.Register{
+		Login:    "",
+		Password: "",
+	}
 
-func validate(req *http.Request) bool {
-	return true
+	decoder := json.NewDecoder(req.Body)
+	err := decoder.Decode(requestDto)
+	if err != nil {
+		return nil, err
+	}
+
+	return requestDto, nil
 }
