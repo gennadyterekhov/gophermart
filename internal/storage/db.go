@@ -1,7 +1,9 @@
 package storage
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/gennadyterekhov/gophermart/internal/config"
 
@@ -11,17 +13,85 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-type DBStorage struct {
-	DBConnection *sql.DB
+type QueryMaker interface {
+	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+	Exec(query string, args ...any) (sql.Result, error)
+	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
+	Ping() error
+	Close() error
+	Commit() error
+	Rollback() error
 }
 
-var Connection = CreateDefaultDBStorage()
+func (ct *ConnectionOrTransaction) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
+	if ct.UseTx {
+		return ct.Tx.QueryRowContext(ctx, query, args...)
+	}
+	return ct.Conn.QueryRowContext(ctx, query, args...)
+}
 
-func CreateDefaultDBStorage() *DBStorage {
+func (ct *ConnectionOrTransaction) Ping() error {
+	return ct.Conn.Ping()
+}
+
+func (ct *ConnectionOrTransaction) Close() error {
+	return ct.Conn.Close()
+}
+
+func (ct *ConnectionOrTransaction) Exec(query string, args ...any) (sql.Result, error) {
+	if ct.UseTx {
+		return ct.Tx.Exec(query, args...)
+	}
+	return ct.Conn.Exec(query, args...)
+}
+
+func (ct *ConnectionOrTransaction) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
+	if ct.UseTx {
+		if ct.Tx == nil {
+			var err error
+			ct.Tx, err = ct.Conn.BeginTx(ctx, opts)
+			return ct.Tx, err
+		}
+		return nil, fmt.Errorf("beginning transaction from existing transaction")
+	}
+	return ct.Conn.BeginTx(ctx, opts)
+}
+
+func (ct *ConnectionOrTransaction) Commit() error {
+	if ct.UseTx {
+		err := ct.Tx.Commit()
+		ct.Tx = nil
+		return err
+	}
+	return nil
+}
+
+func (ct *ConnectionOrTransaction) Rollback() error {
+	if ct.UseTx {
+		err := ct.Tx.Rollback()
+		ct.Tx = nil
+		return err
+	}
+	return nil
+}
+
+type ConnectionOrTransaction struct {
+	Conn  *sql.DB
+	Tx    *sql.Tx
+	UseTx bool
+}
+
+type DB struct {
+	Connection *ConnectionOrTransaction
+}
+
+var DBClient = createDefaultDBClient()
+
+func createDefaultDBClient() *DB {
 	return CreateDBStorage(config.ServerConfig.DBDsn)
 }
 
-func CreateDBStorage(dsn string) *DBStorage {
+func CreateDBStorage(dsn string) *DB {
 	conn, err := sql.Open("pgx", dsn)
 	if err != nil {
 		logger.ZapSugarLogger.Panicln("could not connect to db using dsn: " + dsn + " " + err.Error())
@@ -29,19 +99,13 @@ func CreateDBStorage(dsn string) *DBStorage {
 
 	migration.RunMigrations(conn)
 
-	return &DBStorage{
-		DBConnection: conn,
+	ct := &ConnectionOrTransaction{
+		Conn:  conn,
+		Tx:    nil,
+		UseTx: false,
 	}
-}
 
-func (strg *DBStorage) CloseDB() error {
-	err := strg.DBConnection.Close()
-	if err != nil {
-		logger.ZapSugarLogger.Errorln("could not close db", err.Error())
+	return &DB{
+		Connection: ct,
 	}
-	return err
-}
-
-func (strg *DBStorage) GetDB() *DBStorage {
-	return strg
 }

@@ -24,21 +24,27 @@ git fetch template && git checkout template/master .github
 
 Затем добавьте полученные изменения в свой репозиторий.
 
+## env
+JWT_SIGNING_KEY
+
 ## db installation (one-time use)
 
-sudo -i -u postgres
-psql -U postgres
-postgres=# create database gophermart_db;
-postgres=# create database gophermart_db_test;
-postgres=# create user gophermart_user with encrypted password 'gophermart_pass';
-postgres=# grant all privileges on database gophermart_db to gophermart_user;
-postgres=# grant all privileges on database gophermart_db_test to gophermart_user;
-alter database gophermart_db owner to gophermart_user;
-alter database gophermart_db_test owner to gophermart_user;
-alter schema public owner to gophermart_user;
+      sudo -i -u postgres
+      psql -U postgres
+      postgres=# create database gophermart_db;
+      postgres=# create database gophermart_db_test;
+      postgres=# create user gophermart_user with encrypted password 'gophermart_pass';
+      postgres=# grant all privileges on database gophermart_db to gophermart_user;
+      postgres=# grant all privileges on database gophermart_db_test to gophermart_user;
+      alter database gophermart_db owner to gophermart_user;
+      alter database gophermart_db_test owner to gophermart_user;
+      alter schema public owner to gophermart_user;
 
 after that, use this to connect to db in cli
-psql -U gophermart_user -d gophermart_db
+
+      psql -U gophermart_user -d gophermart_db
 
 or
-psql -U gophermart_user -d gophermart_db_test
+
+      psql -U gophermart_user -d gophermart_db_test
+
