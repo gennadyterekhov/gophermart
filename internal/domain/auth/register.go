@@ -4,16 +4,15 @@ import (
 	"context"
 	"os"
 
-	"github.com/gennadyterekhov/gophermart/internal/domain/models"
-
-	"github.com/gennadyterekhov/gophermart/internal/repositories"
-
-	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
-
 	"github.com/alexedwards/argon2id"
+	"github.com/gennadyterekhov/gophermart/internal/domain/models"
 	"github.com/gennadyterekhov/gophermart/internal/domain/requests"
+	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
+	"github.com/gennadyterekhov/gophermart/internal/repositories"
 	"github.com/golang-jwt/jwt/v5"
 )
+
+const ErrorNotUniqueLogin = "ERROR: duplicate key value violates unique constraint \"users_login_key\" (SQLSTATE 23505)"
 
 func Register(ctx context.Context, reqDto *requests.Register) (*responses.Register, error) {
 	encryptedPassword, err := encrypt(reqDto.Password)
