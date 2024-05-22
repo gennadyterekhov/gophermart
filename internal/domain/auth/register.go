@@ -2,14 +2,11 @@ package auth
 
 import (
 	"context"
-	"os"
 
 	"github.com/alexedwards/argon2id"
-	"github.com/gennadyterekhov/gophermart/internal/domain/models"
 	"github.com/gennadyterekhov/gophermart/internal/domain/requests"
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
 	"github.com/gennadyterekhov/gophermart/internal/repositories"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 const ErrorNotUniqueLogin = "ERROR: duplicate key value violates unique constraint \"users_login_key\" (SQLSTATE 23505)"
@@ -49,35 +46,4 @@ func encrypt(plainPassword string) (string, error) {
 	}
 
 	return hash, err
-}
-
-func getToken(user *models.User) (string, error) {
-	var (
-		token         *jwt.Token
-		tokenAsString string
-		err           error
-	)
-
-	token = jwt.NewWithClaims(jwt.SigningMethodHS256,
-		jwt.MapClaims{
-			"iss": "gophermart",
-			"sub": user.ID,
-		},
-	)
-
-	tokenAsString, err = token.SignedString(getJwtSigningKey())
-	if err != nil {
-		return "", err
-	}
-
-	return tokenAsString, nil
-}
-
-func getJwtSigningKey() []byte {
-	fromEnv, ok := os.LookupEnv("JWT_SIGNING_KEY")
-	if ok {
-		return []byte(fromEnv)
-	}
-
-	return []byte("")
 }

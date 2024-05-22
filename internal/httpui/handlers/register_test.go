@@ -3,9 +3,12 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"net/http"
 	"os"
 	"testing"
+
+	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/auth"
 	"github.com/gennadyterekhov/gophermart/internal/domain/requests"
@@ -45,7 +48,7 @@ func TestCanSendRegisterRequest(t *testing.T) {
 	for _, tt := range cases {
 		t.Run(tt.name, run(func(t *testing.T) {
 			rawJSON := `{"login":"a", "password":"a"}`
-			responseStatusCode := tests.SendPost(
+			responseStatusCode, bodyAsBytes := tests.SendPostAndReturnBody(
 				t,
 				tests.TestServer,
 				"/api/user/register",
@@ -54,6 +57,13 @@ func TestCanSendRegisterRequest(t *testing.T) {
 			)
 
 			assert.Equal(t, tt.code, responseStatusCode)
+			if tt.code == http.StatusOK {
+				responseBody := &responses.Register{ID: 0, Token: ""}
+				err := json.Unmarshal(bodyAsBytes, responseBody)
+				assert.NoError(t, err)
+				assert.NotEqual(t, "", responseBody.Token)
+				assert.NotEqual(t, 0, responseBody.Token)
+			}
 		}))
 	}
 }

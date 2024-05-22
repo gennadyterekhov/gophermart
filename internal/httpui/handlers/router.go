@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"github.com/gennadyterekhov/gophermart/internal/httpui/handlers/login"
+	"github.com/gennadyterekhov/gophermart/internal/httpui/handlers/register"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -19,6 +21,6 @@ func registerRoutes(router chi.Router) {
 	router.Get("/api/user/orders", TempHandler().ServeHTTP)
 	router.Post("/api/user/balance/withdraw", TempHandler().ServeHTTP)
 	router.Post("/api/user/orders", TempHandler().ServeHTTP)
-	router.Post("/api/user/login", TempHandler().ServeHTTP)
-	router.Post("/api/user/register", RegisterHandler().ServeHTTP)
+	router.Post("/api/user/login", login.Handler().ServeHTTP)
+	router.Post("/api/user/register", register.Handler().ServeHTTP)
 }

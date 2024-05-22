@@ -1,4 +1,4 @@
-package handlers
+package register
 
 import (
 	"encoding/json"
@@ -13,7 +13,7 @@ import (
 	"github.com/gennadyterekhov/gophermart/internal/domain/auth"
 )
 
-func RegisterHandler() http.Handler {
+func Handler() http.Handler {
 	return middleware.WithoutAuth(
 		http.HandlerFunc(register),
 		middleware.ContentTypeJson,
@@ -25,6 +25,7 @@ func register(res http.ResponseWriter, req *http.Request) {
 	reqDto, err := getRequestDto(req)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	resDto, err := auth.Register(req.Context(), reqDto)
@@ -37,9 +38,13 @@ func register(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, err.Error(), status)
 		return
 	}
-	resBody := serializers.Register(resDto)
+	resBody, err := serializers.Register(resDto)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	_, err = res.Write([]byte(resBody))
+	_, err = res.Write(resBody)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return

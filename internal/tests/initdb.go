@@ -4,11 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
-	"github.com/gennadyterekhov/gophermart/internal/storage"
-
 	"github.com/gennadyterekhov/gophermart/internal/config"
+	"github.com/gennadyterekhov/gophermart/internal/storage"
+	"github.com/stretchr/testify/assert"
 )
 
 func InitDB() storage.QueryMaker {
