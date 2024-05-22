@@ -23,6 +23,22 @@ func GetUserById(ctx context.Context, id int64) (*models.User, error) {
 	return &user, nil
 }
 
+func GetUserByLogin(ctx context.Context, login string) (*models.User, error) {
+	const query = `select id, login, password from users where login = $1`
+	row := storage.DBClient.Connection.QueryRowContext(ctx, query, login)
+	if row.Err() != nil {
+		return nil, row.Err()
+	}
+
+	user := models.User{}
+	err := row.Scan(&(user.ID), &(user.Login), &(user.Password))
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func AddUser(ctx context.Context, login string, password string) (*models.User, error) {
 	const query = `insert into users ( login, password) values ( $1, $2) RETURNING id;`
 
