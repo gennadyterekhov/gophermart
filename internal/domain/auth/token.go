@@ -6,6 +6,7 @@ import (
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/models"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/pkg/errors"
 )
 
 func getToken(user *models.User) (string, error) {
@@ -18,7 +19,7 @@ func getToken(user *models.User) (string, error) {
 	token = jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"iss": "gophermart",
-			"sub": user.ID,
+			"sub": user.Login,
 		},
 	)
 
@@ -39,7 +40,24 @@ func getJwtSigningKey() []byte {
 	return []byte("")
 }
 
-func validateToken(token string, id int64) error {
+func validateToken(token string, login string) error {
+	claims, err := getClaimsFromToken(token)
+	if err != nil {
+		return err
+	}
+	sub, err := claims.GetSubject()
+	if err != nil {
+		return err
+	}
+
+	if sub == login {
+		return nil
+	}
+
+	return fmt.Errorf("token did not authenticate selected user")
+}
+
+func getClaimsFromToken(token string) (*jwt.MapClaims, error) {
 	// Parse takes the token string and a function for looking up the key. The latter is especially
 	// useful if you use multiple keys for your application.  The standard is to use 'kid' in the
 	// head of the token to identify which key to use, but the parsed token (head and claims) is provided
@@ -52,14 +70,25 @@ func validateToken(token string, id int64) error {
 		return getJwtSigningKey(), nil
 	})
 	if err != nil {
-		return fmt.Errorf("error when parsing token")
+		return nil, errors.Wrap(err, "error when parsing token")
 	}
 	claims, ok := tokenObject.Claims.(jwt.MapClaims)
-
-	if ok {
-		if claims["sub"] == float64(id) {
-			return nil
-		}
+	if !ok {
+		return nil, fmt.Errorf("error when getting claims from token")
 	}
-	return fmt.Errorf("token did not authenticate selected user")
+	return &claims, nil
+}
+
+func GetLoginFromToken(token string) (string, error) {
+	claims, err := getClaimsFromToken(token)
+	if err != nil {
+		return "", err
+	}
+
+	login, err := claims.GetSubject()
+	if err != nil {
+		return "", err
+	}
+
+	return login, nil
 }

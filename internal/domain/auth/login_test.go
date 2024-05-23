@@ -14,13 +14,13 @@ func TestCanLogin(t *testing.T) {
 	run := tests.UsingTransactions()
 
 	t.Run("", run(func(t *testing.T) {
-		userDto := registerForTest("a", "a")
+		registerForTest("a", "a")
 
 		reqDto := &requests.Login{Login: "a", Password: "a"}
 		resDto, err := Login(context.Background(), reqDto)
 		assert.NoError(t, err)
 
-		err = validateToken(resDto.Token, userDto.ID)
+		err = validateToken(resDto.Token, "a")
 		assert.NoError(t, err)
 	}))
 }

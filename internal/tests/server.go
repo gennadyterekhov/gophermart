@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-chi/chi/v5"
@@ -17,6 +18,26 @@ func InitTestServer(routerInterface chi.Router) {
 	TestServer = httptest.NewServer(
 		routerInterface,
 	)
+}
+
+func SendGet(
+	t *testing.T,
+	ts *httptest.Server,
+	path string,
+	token string,
+) (int, []byte) {
+	req, err := http.NewRequest(http.MethodGet, ts.URL+path, strings.NewReader(""))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", token)
+
+	response, err := ts.Client().Do(req)
+	require.NoError(t, err)
+	bodyAsBytes, err := getBodyAsBytes(response.Body)
+	response.Body.Close()
+	require.NoError(t, err)
+
+	return response.StatusCode, bodyAsBytes
 }
 
 func SendPost(
