@@ -23,6 +23,13 @@ type QueryMaker interface {
 	Rollback() error
 }
 
+func (ct *ConnectionOrTransaction) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+	if ct.UseTx {
+		return ct.Tx.QueryContext(ctx, query, args...)
+	}
+	return ct.Conn.QueryContext(ctx, query, args...)
+}
+
 func (ct *ConnectionOrTransaction) QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row {
 	if ct.UseTx {
 		return ct.Tx.QueryRowContext(ctx, query, args...)
