@@ -22,7 +22,7 @@ func Register(ctx context.Context, reqDto *requests.Register) (*responses.Regist
 		return nil, err
 	}
 
-	token, err := getToken(user)
+	token, err := createToken(user)
 	if err != nil {
 		return nil, err
 	}
