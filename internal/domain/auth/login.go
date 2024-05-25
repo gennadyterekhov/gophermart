@@ -25,7 +25,7 @@ func Login(ctx context.Context, reqDto *requests.Login) (*responses.Login, error
 		return nil, err
 	}
 
-	token, err := getToken(user)
+	token, err := createToken(user)
 	if err != nil {
 		return nil, err
 	}

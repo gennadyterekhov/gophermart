@@ -3,23 +3,31 @@ package auth
 import (
 	"fmt"
 	"os"
+	"time"
 
+	"github.com/gennadyterekhov/gophermart/internal/domain/auth/jwtclaims"
 	"github.com/gennadyterekhov/gophermart/internal/domain/models"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/pkg/errors"
 )
 
-func getToken(user *models.User) (string, error) {
+const issuerGophermart = "gophermart"
+
+func createToken(user *models.User) (string, error) {
 	var (
 		token         *jwt.Token
 		tokenAsString string
 		err           error
 	)
-
 	token = jwt.NewWithClaims(jwt.SigningMethodHS256,
-		jwt.MapClaims{
-			"iss": "gophermart",
-			"sub": user.Login,
+		&jwtclaims.Claims{
+			ExpiresAt: &jwt.NumericDate{Time: time.Now().AddDate(1, 0, 0)},
+			IssuedAt:  &jwt.NumericDate{Time: time.Now()},
+			NotBefore: &jwt.NumericDate{Time: time.Now()},
+			Issuer:    issuerGophermart,
+			Subject:   user.Login,
+			Audience:  jwt.ClaimStrings{},
+			UserID:    user.ID,
 		},
 	)
 
@@ -57,38 +65,44 @@ func validateToken(token string, login string) error {
 	return fmt.Errorf("token did not authenticate selected user")
 }
 
-func getClaimsFromToken(token string) (*jwt.MapClaims, error) {
+func getClaimsFromToken(token string) (*jwtclaims.Claims, error) {
+	claims := &jwtclaims.Claims{}
 	// Parse takes the token string and a function for looking up the key. The latter is especially
 	// useful if you use multiple keys for your application.  The standard is to use 'kid' in the
 	// head of the token to identify which key to use, but the parsed token (head and claims) is provided
 	// to the callback, providing flexibility.
-	tokenObject, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
+	_, err := jwt.ParseWithClaims(
+		token,
+		claims,
+		func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
 
-		return getJwtSigningKey(), nil
-	})
+			return getJwtSigningKey(), nil
+		},
+	)
 	if err != nil {
 		return nil, errors.Wrap(err, "error when parsing token")
 	}
-	claims, ok := tokenObject.Claims.(jwt.MapClaims)
-	if !ok {
-		return nil, fmt.Errorf("error when getting claims from token")
-	}
-	return &claims, nil
+
+	return claims, nil
 }
 
-func GetLoginFromToken(token string) (string, error) {
+func GetIDAndLoginFromToken(token string) (int64, string, error) {
 	claims, err := getClaimsFromToken(token)
 	if err != nil {
-		return "", err
+		return 0, "", err
 	}
 
 	login, err := claims.GetSubject()
 	if err != nil {
-		return "", err
+		return 0, "", err
+	}
+	id, err := claims.GetUserID()
+	if err != nil {
+		return 0, "", err
 	}
 
-	return login, nil
+	return id, login, nil
 }
