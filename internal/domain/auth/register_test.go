@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/gennadyterekhov/gophermart/internal/domain/auth/register"
+
 	"github.com/gennadyterekhov/gophermart/internal/domain/requests"
 	"github.com/gennadyterekhov/gophermart/internal/repositories"
 	"github.com/gennadyterekhov/gophermart/internal/tests"
@@ -26,7 +28,7 @@ func TestCanRegister(t *testing.T) {
 			Login:    "a",
 			Password: "a",
 		}
-		resDto, err := Register(context.Background(), reqDto)
+		resDto, err := register.Register(context.Background(), reqDto)
 		assert.NoError(t, err)
 		assert.NotEqual(t, "", resDto.Token)
 
@@ -42,9 +44,9 @@ func TestCannotRegisterWhenLoginAlreadyUsed(t *testing.T) {
 
 	t.Run("", run(func(t *testing.T) {
 		var err error
-		_, err = Register(context.Background(), &requests.Register{Login: "a", Password: "a"})
+		_, err = register.Register(context.Background(), &requests.Register{Login: "a", Password: "a"})
 		assert.NoError(t, err)
-		_, err = Register(context.Background(), &requests.Register{Login: "a", Password: "a"})
+		_, err = register.Register(context.Background(), &requests.Register{Login: "a", Password: "a"})
 		assert.Equal(t, "ERROR: duplicate key value violates unique constraint \"users_login_key\" (SQLSTATE 23505)", err.Error())
 	}))
 }

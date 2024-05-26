@@ -6,7 +6,7 @@ import (
 	"github.com/gennadyterekhov/gophermart/internal/domain/models"
 )
 
-func Withdrawals(resDto *[]models.Withdrawals) ([]byte, error) {
+func Withdrawals(resDto *[]models.Withdrawal) ([]byte, error) {
 	serialized, err := json.Marshal(*resDto)
 	if err != nil {
 		return []byte{}, err

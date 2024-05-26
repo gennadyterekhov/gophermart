@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/alexedwards/argon2id"
+	"github.com/gennadyterekhov/gophermart/internal/domain/auth/token"
 	"github.com/gennadyterekhov/gophermart/internal/domain/requests"
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
 	"github.com/gennadyterekhov/gophermart/internal/logger"
 	"github.com/gennadyterekhov/gophermart/internal/repositories"
-
-	"github.com/alexedwards/argon2id"
 )
 
 const ErrorWrongCredentials = "unknown credentials"
@@ -25,13 +25,13 @@ func Login(ctx context.Context, reqDto *requests.Login) (*responses.Login, error
 		return nil, err
 	}
 
-	token, err := createToken(user)
+	tokenString, err := token.CreateToken(user)
 	if err != nil {
 		return nil, err
 	}
 
 	resDto := responses.Login{
-		Token: token,
+		Token: tokenString,
 	}
 
 	return &resDto, nil

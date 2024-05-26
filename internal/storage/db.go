@@ -52,6 +52,13 @@ func (ct *ConnectionOrTransaction) Exec(query string, args ...any) (sql.Result, 
 	return ct.Conn.Exec(query, args...)
 }
 
+func (ct *ConnectionOrTransaction) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	if ct.UseTx {
+		return ct.Tx.Exec(query, args...)
+	}
+	return ct.Conn.ExecContext(ctx, query, args...)
+}
+
 func (ct *ConnectionOrTransaction) BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error) {
 	if ct.UseTx {
 		if ct.Tx == nil {

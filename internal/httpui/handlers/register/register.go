@@ -4,13 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/gennadyterekhov/gophermart/internal/httpui/middleware"
-
-	"github.com/gennadyterekhov/gophermart/internal/httpui/serializers"
-
+	domain "github.com/gennadyterekhov/gophermart/internal/domain/auth/register"
 	"github.com/gennadyterekhov/gophermart/internal/domain/requests"
-
-	"github.com/gennadyterekhov/gophermart/internal/domain/auth"
+	"github.com/gennadyterekhov/gophermart/internal/httpui/middleware"
+	"github.com/gennadyterekhov/gophermart/internal/httpui/serializers"
 )
 
 func Handler() http.Handler {
@@ -28,11 +25,11 @@ func register(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	resDto, err := auth.Register(req.Context(), reqDto)
+	resDto, err := domain.Register(req.Context(), reqDto)
 	if err != nil {
 		status := http.StatusInternalServerError
 
-		if err.Error() == auth.ErrorNotUniqueLogin {
+		if err.Error() == domain.ErrorNotUniqueLogin {
 			status = http.StatusConflict
 		}
 		http.Error(res, err.Error(), status)
