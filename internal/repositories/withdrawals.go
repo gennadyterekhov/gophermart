@@ -8,7 +8,7 @@ import (
 	"github.com/gennadyterekhov/gophermart/internal/storage"
 )
 
-func GetAllWithdrawalsForUser(ctx context.Context, userID int64) ([]models.Withdrawals, error) {
+func GetAllWithdrawalsForUser(ctx context.Context, userID int64) ([]models.Withdrawal, error) {
 	const query = `SELECT 
     			       id, 
     			       user_id, 
@@ -25,10 +25,10 @@ func GetAllWithdrawalsForUser(ctx context.Context, userID int64) ([]models.Withd
 
 	defer rows.Close()
 
-	wdrs := make([]models.Withdrawals, 0)
+	wdrs := make([]models.Withdrawal, 0)
 
 	for rows.Next() {
-		wdr := models.Withdrawals{}
+		wdr := models.Withdrawal{}
 		err = rows.Scan(&(wdr.ID), &(wdr.UserID), &(wdr.OrderNumber), &(wdr.TotalSum), &(wdr.ProcessedAt))
 		if err != nil {
 			return nil, err
@@ -44,14 +44,14 @@ func GetAllWithdrawalsForUser(ctx context.Context, userID int64) ([]models.Withd
 	return wdrs, nil
 }
 
-func GetWithdrawalById(ctx context.Context, id int64) (*models.Withdrawals, error) {
+func GetWithdrawalById(ctx context.Context, id int64) (*models.Withdrawal, error) {
 	const query = `SELECT id, user_id, order_number, total_sum, processed_at FROM withdrawals WHERE id = $1`
 	row := storage.DBClient.Connection.QueryRowContext(ctx, query, id)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
 
-	wdr := models.Withdrawals{}
+	wdr := models.Withdrawal{}
 	err := row.Scan(&(wdr.ID), &(wdr.UserID), &(wdr.OrderNumber), &(wdr.TotalSum), &(wdr.ProcessedAt))
 	if err != nil {
 		return nil, err
@@ -63,10 +63,10 @@ func GetWithdrawalById(ctx context.Context, id int64) (*models.Withdrawals, erro
 func AddWithdrawal(
 	ctx context.Context,
 	userID int64,
-	orderNumber int64,
+	orderNumber string,
 	totalSum int64,
 	processedAt time.Time,
-) (*models.Withdrawals, error) {
+) (*models.Withdrawal, error) {
 	const query = `INSERT INTO withdrawals (user_id, order_number, total_sum, processed_at)
 			values ($1, $2, $3, $4) RETURNING id;`
 
@@ -81,7 +81,7 @@ func AddWithdrawal(
 		return nil, err
 	}
 
-	wdr := models.Withdrawals{
+	wdr := models.Withdrawal{
 		ID:          id,
 		UserID:      userID,
 		OrderNumber: orderNumber,

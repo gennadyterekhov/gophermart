@@ -8,9 +8,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/gennadyterekhov/gophermart/internal/domain/auth/register"
+
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
 
-	"github.com/gennadyterekhov/gophermart/internal/domain/auth"
 	"github.com/gennadyterekhov/gophermart/internal/domain/requests"
 	"github.com/gennadyterekhov/gophermart/internal/tests"
 	"github.com/stretchr/testify/assert"
@@ -77,7 +78,7 @@ func Test409IfSameLogin(t *testing.T) {
 			Login:    "a",
 			Password: "a",
 		}
-		_, err := auth.Register(context.Background(), reqDto)
+		_, err := register.Register(context.Background(), reqDto)
 		assert.NoError(t, err)
 
 		rawJSON := `{"login":"a", "password":"b"}`

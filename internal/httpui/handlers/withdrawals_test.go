@@ -24,7 +24,7 @@ func TestCanSendWithdrawalsRequest(t *testing.T) {
 		withdrawalNewest, err := repositories.AddWithdrawal(
 			context.Background(),
 			regDto.ID,
-			0, 0,
+			"", 0,
 			time.Time{},
 		)
 		assert.NoError(t, err)

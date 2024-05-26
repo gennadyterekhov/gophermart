@@ -1,9 +1,10 @@
-package auth
+package register
 
 import (
 	"context"
 
 	"github.com/alexedwards/argon2id"
+	"github.com/gennadyterekhov/gophermart/internal/domain/auth/token"
 	"github.com/gennadyterekhov/gophermart/internal/domain/requests"
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
 	"github.com/gennadyterekhov/gophermart/internal/repositories"
@@ -22,14 +23,14 @@ func Register(ctx context.Context, reqDto *requests.Register) (*responses.Regist
 		return nil, err
 	}
 
-	token, err := createToken(user)
+	tokenString, err := token.CreateToken(user)
 	if err != nil {
 		return nil, err
 	}
 
 	resDto := responses.Register{
 		ID:    user.ID,
-		Token: token,
+		Token: tokenString,
 	}
 
 	return &resDto, nil

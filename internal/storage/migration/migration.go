@@ -43,7 +43,7 @@ func createTableWithdrawals(connection *sql.DB) {
 	(
 		id serial not null primary key,
 		user_id int references users(id),
-		order_number int not null,
+		order_number varchar(255) not null,
     	total_sum int not null,
 		processed_at timestamp with time zone not null
 	);`

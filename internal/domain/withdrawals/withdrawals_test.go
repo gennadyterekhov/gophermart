@@ -59,25 +59,25 @@ func TestNoContentReturnsError(t *testing.T) {
 func createDifferentWithdrawals(
 	t *testing.T,
 	userDto *responses.Register,
-) (*models.Withdrawals, *models.Withdrawals, *models.Withdrawals) {
+) (*models.Withdrawal, *models.Withdrawal, *models.Withdrawal) {
 	withdrawalNewest, err := repositories.AddWithdrawal(
 		context.Background(),
 		userDto.ID,
-		0, 0,
+		"", 0,
 		time.Time{},
 	)
 	assert.NoError(t, err)
 	withdrawalMedium, err := repositories.AddWithdrawal(
 		context.Background(),
 		userDto.ID,
-		0, 0,
+		"", 0,
 		time.Time{}.AddDate(-1, 0, 0),
 	)
 	assert.NoError(t, err)
 	withdrawalOldest, err := repositories.AddWithdrawal(
 		context.Background(),
 		userDto.ID,
-		0, 0,
+		"", 0,
 		time.Time{}.AddDate(-10, 0, 0),
 	)
 	assert.NoError(t, err)

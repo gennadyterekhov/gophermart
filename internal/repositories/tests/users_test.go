@@ -1,9 +1,11 @@
-package repositories
+package tests
 
 import (
 	"context"
 	"os"
 	"testing"
+
+	"github.com/gennadyterekhov/gophermart/internal/repositories"
 
 	"github.com/gennadyterekhov/gophermart/internal/tests"
 	"github.com/stretchr/testify/assert"
@@ -16,23 +18,23 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestCatGetUserById(t *testing.T) {
+func TestCanGetUserById(t *testing.T) {
 	run := tests.UsingTransactions()
 	t.Run("", run(func(t *testing.T) {
-		user, err := AddUser(context.Background(), "a", "a")
+		user, err := repositories.AddUser(context.Background(), "a", "a")
 		assert.NoError(t, err)
 
-		user, err = GetUserById(context.Background(), user.ID)
+		user, err = repositories.GetUserById(context.Background(), user.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, "a", user.Login)
 		assert.Equal(t, "a", user.Password)
 	}))
 }
 
-func TestCatInsertUser(t *testing.T) {
+func TestCanInsertUser(t *testing.T) {
 	run := tests.UsingTransactions()
 	t.Run("", run(func(t *testing.T) {
-		user, err := AddUser(context.Background(), "a", "a")
+		user, err := repositories.AddUser(context.Background(), "a", "a")
 		assert.NoError(t, err)
 		assert.Equal(t, "a", user.Login)
 		assert.Equal(t, "a", user.Password)

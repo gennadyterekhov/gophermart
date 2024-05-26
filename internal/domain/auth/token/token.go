@@ -1,4 +1,4 @@
-package auth
+package token
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 
 const issuerGophermart = "gophermart"
 
-func createToken(user *models.User) (string, error) {
+func CreateToken(user *models.User) (string, error) {
 	var (
 		token         *jwt.Token
 		tokenAsString string
@@ -48,7 +48,7 @@ func getJwtSigningKey() []byte {
 	return []byte("")
 }
 
-func validateToken(token string, login string) error {
+func ValidateToken(token string, login string) error {
 	claims, err := getClaimsFromToken(token)
 	if err != nil {
 		return err

@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/gennadyterekhov/gophermart/internal/domain/auth/register"
+	"github.com/gennadyterekhov/gophermart/internal/domain/auth/token"
 	"github.com/gennadyterekhov/gophermart/internal/domain/requests"
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
 	"github.com/gennadyterekhov/gophermart/internal/tests"
@@ -20,7 +22,7 @@ func TestCanLogin(t *testing.T) {
 		resDto, err := Login(context.Background(), reqDto)
 		assert.NoError(t, err)
 
-		err = validateToken(resDto.Token, "a")
+		err = token.ValidateToken(resDto.Token, "a")
 		assert.NoError(t, err)
 	}))
 }
@@ -53,7 +55,7 @@ func TestCannotLoginWithWrongPassword(t *testing.T) {
 
 func registerForTest(login string, password string) *responses.Register {
 	reqDto := &requests.Register{Login: login, Password: password}
-	resDto, err := Register(context.Background(), reqDto)
+	resDto, err := register.Register(context.Background(), reqDto)
 	if err != nil {
 		panic(err)
 	}

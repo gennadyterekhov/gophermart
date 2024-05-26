@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/gennadyterekhov/gophermart/internal/logger"
+	"github.com/gennadyterekhov/gophermart/internal/domain/auth/token"
 
-	"github.com/gennadyterekhov/gophermart/internal/domain/auth"
+	"github.com/gennadyterekhov/gophermart/internal/logger"
 )
 
 const (
@@ -16,7 +16,7 @@ const (
 func Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		authHeader := req.Header.Get("Authorization")
-		id, _, err := auth.GetIDAndLoginFromToken(authHeader)
+		id, _, err := token.GetIDAndLoginFromToken(authHeader)
 		if err != nil {
 			logger.ZapSugarLogger.Error(err.Error())
 			res.WriteHeader(http.StatusUnauthorized)
