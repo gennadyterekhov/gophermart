@@ -24,14 +24,21 @@ func TestMain(m *testing.M) {
 func setupTestServer() {
 	testRouter := chi.NewRouter()
 	testRouter.Get(
-		"/test",
+		"/auth",
 		WithAuth(
 			http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 				res.WriteHeader(200)
 			}),
 		).ServeHTTP,
 	)
-
+	testRouter.Post(
+		"/luhn",
+		Luhn(
+			http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+				res.WriteHeader(200)
+			}),
+		).ServeHTTP,
+	)
 	tests.TestServer = httptest.NewServer(
 		testRouter,
 	)
@@ -47,7 +54,7 @@ func TestCanAuthWithToken(t *testing.T) {
 		responseStatusCode, _ := tests.SendGet(
 			t,
 			tests.TestServer,
-			"/test",
+			"/auth",
 			resDto.Token,
 		)
 
@@ -65,7 +72,7 @@ func Test401IfNoToken(t *testing.T) {
 		responseStatusCode, _ := tests.SendGet(
 			t,
 			tests.TestServer,
-			"/test",
+			"/auth",
 			"incorrect token",
 		)
 
