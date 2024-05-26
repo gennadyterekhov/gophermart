@@ -40,6 +40,17 @@ func SendGet(
 	return response.StatusCode, bodyAsBytes
 }
 
+func SendPostWithoutToken(
+	t *testing.T,
+	ts *httptest.Server,
+	path string,
+	requestBody *bytes.Buffer,
+) int {
+	code, _ := SendPostAndReturnBody(t, ts, path, "application/json", requestBody)
+
+	return code
+}
+
 func SendPost(
 	t *testing.T,
 	ts *httptest.Server,
