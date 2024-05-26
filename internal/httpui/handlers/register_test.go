@@ -54,6 +54,7 @@ func TestCanSendRegisterRequest(t *testing.T) {
 				tests.TestServer,
 				"/api/user/register",
 				tt.contentType,
+				"",
 				bytes.NewBuffer([]byte(rawJSON)),
 			)
 
@@ -87,6 +88,7 @@ func Test409IfSameLogin(t *testing.T) {
 			tests.TestServer,
 			"/api/user/register",
 			"application/json",
+			"",
 			bytes.NewBuffer([]byte(rawJSON)),
 		)
 
