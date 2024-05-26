@@ -2,13 +2,12 @@ package handlers
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"testing"
 
-	"github.com/gennadyterekhov/gophermart/internal/domain/auth"
-	"github.com/gennadyterekhov/gophermart/internal/domain/requests"
+	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
+
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
 	"github.com/gennadyterekhov/gophermart/internal/tests"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +18,7 @@ func TestCanSendLoginRequest(t *testing.T) {
 	tests.InitTestServer(GetRouter())
 
 	t.Run("", run(func(t *testing.T) {
-		registerForTest("a", "a")
+		helpers.RegisterForTest("a", "a")
 
 		rawJSON := `{"login":"a", "password":"a"}`
 		responseStatusCode, bodyAsBytes := tests.SendPostAndReturnBody(
@@ -44,7 +43,7 @@ func TestCannotLoginWithWrongFieldName(t *testing.T) {
 	tests.InitTestServer(GetRouter())
 
 	t.Run("", run(func(t *testing.T) {
-		registerForTest("a", "a")
+		helpers.RegisterForTest("a", "a")
 
 		rawJSON := `{"logi":"a", "password":"a"}`
 		responseStatusCode := tests.SendPost(
@@ -64,7 +63,7 @@ func TestCannotLoginWithWrongContentType(t *testing.T) {
 	tests.InitTestServer(GetRouter())
 
 	t.Run("", run(func(t *testing.T) {
-		registerForTest("a", "a")
+		helpers.RegisterForTest("a", "a")
 
 		rawJSON := `{"login":"a", "password":"a"}`
 		responseStatusCode := tests.SendPost(
@@ -77,13 +76,4 @@ func TestCannotLoginWithWrongContentType(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, responseStatusCode)
 	}))
-}
-
-func registerForTest(login string, password string) *responses.Register {
-	reqDto := &requests.Register{Login: login, Password: password}
-	resDto, err := auth.Register(context.Background(), reqDto)
-	if err != nil {
-		panic(err)
-	}
-	return resDto
 }

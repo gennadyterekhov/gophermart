@@ -1,15 +1,13 @@
 package middleware
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 
-	"github.com/gennadyterekhov/gophermart/internal/domain/auth"
-	"github.com/gennadyterekhov/gophermart/internal/domain/requests"
-	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
+	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 
@@ -44,7 +42,7 @@ func TestCanAuthWithToken(t *testing.T) {
 	setupTestServer()
 
 	t.Run("", run(func(t *testing.T) {
-		resDto := registerForTest("a", "a")
+		resDto := helpers.RegisterForTest("a", "a")
 
 		responseStatusCode, _ := tests.SendGet(
 			t,
@@ -62,7 +60,7 @@ func Test401IfNoToken(t *testing.T) {
 	setupTestServer()
 
 	t.Run("", run(func(t *testing.T) {
-		registerForTest("a", "a")
+		helpers.RegisterForTest("a", "a")
 
 		responseStatusCode, _ := tests.SendGet(
 			t,
@@ -73,13 +71,4 @@ func Test401IfNoToken(t *testing.T) {
 
 		assert.Equal(t, http.StatusUnauthorized, responseStatusCode)
 	}))
-}
-
-func registerForTest(login string, password string) *responses.Register {
-	reqDto := &requests.Register{Login: login, Password: password}
-	resDto, err := auth.Register(context.Background(), reqDto)
-	if err != nil {
-		panic(err)
-	}
-	return resDto
 }

@@ -8,7 +8,7 @@ import (
 )
 
 func GetUserById(ctx context.Context, id int64) (*models.User, error) {
-	const query = `select id, login, password from users where id = $1`
+	const query = `SELECT id, login, password from users WHERE  id = $1`
 	row := storage.DBClient.Connection.QueryRowContext(ctx, query, id)
 	if row.Err() != nil {
 		return nil, row.Err()
@@ -24,7 +24,7 @@ func GetUserById(ctx context.Context, id int64) (*models.User, error) {
 }
 
 func GetUserByLogin(ctx context.Context, login string) (*models.User, error) {
-	const query = `select id, login, password from users where login = $1`
+	const query = `SELECT id, login, password from users WHERE  login = $1`
 	row := storage.DBClient.Connection.QueryRowContext(ctx, query, login)
 	if row.Err() != nil {
 		return nil, row.Err()
@@ -40,7 +40,7 @@ func GetUserByLogin(ctx context.Context, login string) (*models.User, error) {
 }
 
 func AddUser(ctx context.Context, login string, password string) (*models.User, error) {
-	const query = `insert into users ( login, password) values ( $1, $2) RETURNING id;`
+	const query = `INSERT INTO users ( login, password) VALUES ( $1, $2) RETURNING id;`
 
 	row := storage.DBClient.Connection.QueryRowContext(ctx, query, login, password)
 	if row.Err() != nil {
