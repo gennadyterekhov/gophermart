@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,19 +17,21 @@ const (
 
 func Luhn(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
-		bytes, err := io.ReadAll(req.Body)
+		var reqBody []byte
+		reqBody, err := io.ReadAll(req.Body)
 		if err != nil {
-			logger.ZapSugarLogger.Error(err.Error())
+			logger.ZapSugarLogger.Errorln("could not read body", err.Error())
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+		req.Body = io.NopCloser(bytes.NewBuffer(reqBody))
 
 		type jsonWithOrder struct {
 			Order string `json:"order,omitempty"`
 		}
 		jsonWithOrderInstance := jsonWithOrder{}
 
-		err = json.Unmarshal(bytes, &jsonWithOrderInstance)
+		err = json.Unmarshal(reqBody, &jsonWithOrderInstance)
 		if err != nil {
 			logger.ZapSugarLogger.Error(err.Error())
 			res.WriteHeader(http.StatusInternalServerError)

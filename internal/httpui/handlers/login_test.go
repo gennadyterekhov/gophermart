@@ -26,6 +26,7 @@ func TestCanSendLoginRequest(t *testing.T) {
 			tests.TestServer,
 			"/api/user/login",
 			"application/json",
+			"",
 			bytes.NewBuffer([]byte(rawJSON)),
 		)
 
@@ -51,6 +52,7 @@ func TestCannotLoginWithWrongFieldName(t *testing.T) {
 			tests.TestServer,
 			"/api/user/login",
 			"application/json",
+			"",
 			bytes.NewBuffer([]byte(rawJSON)),
 		)
 
@@ -71,6 +73,7 @@ func TestCannotLoginWithWrongContentType(t *testing.T) {
 			tests.TestServer,
 			"/api/user/login",
 			"application",
+			"",
 			bytes.NewBuffer([]byte(rawJSON)),
 		)
 

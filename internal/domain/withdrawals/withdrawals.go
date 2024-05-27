@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gennadyterekhov/gophermart/internal/domain/balance"
+
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/requests"
@@ -44,7 +46,7 @@ func Create(ctx context.Context, reqDto *requests.Withdrawals) (*responses.PostW
 		return nil, fmt.Errorf("cannot get user_id from context")
 	}
 
-	currentBalance, err := getBalance(ctx, userID)
+	currentBalance, err := balance.GetBalance(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -59,19 +61,4 @@ func Create(ctx context.Context, reqDto *requests.Withdrawals) (*responses.PostW
 	}
 
 	return &responses.PostWithdrawals{}, nil
-}
-
-func getBalance(ctx context.Context, userID int64) (int64, error) {
-	orders, err := repositories.GetAllOrdersForUser(ctx, userID)
-	if err != nil {
-		return 0, err
-	}
-	var sum int64
-	for _, order := range orders {
-		if order.Accrual != nil {
-			sum += *order.Accrual
-		}
-	}
-
-	return sum, nil
 }

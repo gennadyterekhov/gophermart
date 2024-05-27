@@ -46,7 +46,7 @@ func SendPostWithoutToken(
 	path string,
 	requestBody *bytes.Buffer,
 ) int {
-	code, _ := SendPostAndReturnBody(t, ts, path, "application/json", requestBody)
+	code, _ := SendPostAndReturnBody(t, ts, path, "application/json", "", requestBody)
 
 	return code
 }
@@ -56,9 +56,10 @@ func SendPost(
 	ts *httptest.Server,
 	path string,
 	contentType string,
+	token string,
 	requestBody *bytes.Buffer,
 ) int {
-	code, _ := SendPostAndReturnBody(t, ts, path, contentType, requestBody)
+	code, _ := SendPostAndReturnBody(t, ts, path, contentType, token, requestBody)
 
 	return code
 }
@@ -68,11 +69,13 @@ func SendPostAndReturnBody(
 	ts *httptest.Server,
 	path string,
 	contentType string,
+	token string,
 	requestBody *bytes.Buffer,
 ) (int, []byte) {
 	req, err := http.NewRequest(http.MethodPost, ts.URL+path, requestBody)
 	require.NoError(t, err)
 	req.Header.Set("Content-Type", contentType)
+	req.Header.Set("Authorization", token)
 
 	response, err := ts.Client().Do(req)
 	require.NoError(t, err)

@@ -6,18 +6,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gennadyterekhov/gophermart/internal/domain/balance"
 	"github.com/gennadyterekhov/gophermart/internal/domain/models"
+	"github.com/gennadyterekhov/gophermart/internal/domain/requests"
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
-
-	"github.com/gennadyterekhov/gophermart/internal/repositories"
-
-	"github.com/stretchr/testify/assert"
-
 	"github.com/gennadyterekhov/gophermart/internal/httpui/middleware"
-
-	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
-
+	"github.com/gennadyterekhov/gophermart/internal/repositories"
 	"github.com/gennadyterekhov/gophermart/internal/tests"
+	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain(m *testing.M) {
@@ -53,6 +51,62 @@ func TestNoContentReturnsError(t *testing.T) {
 		ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
 		_, err := GetAll(ctx)
 		assert.Equal(t, err.Error(), ErrorNoContent)
+	}))
+}
+
+func TestCanCreateWithdrawals(t *testing.T) {
+	run := tests.UsingTransactions()
+
+	t.Run("", run(func(t *testing.T) {
+		userDto := helpers.RegisterForTest("a", "a")
+		var accrual int64 = 10
+		_, err := repositories.AddOrder(
+			context.Background(),
+			"a",
+			userDto.ID,
+			"",
+			&accrual,
+			time.Time{},
+		)
+		require.NoError(t, err)
+
+		ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
+		reqDto := &requests.Withdrawals{
+			Order: "a", // luhn is done in middleware// TODO check luhn in handler test
+			Sum:   1,
+		}
+		_, err = Create(ctx, reqDto)
+		assert.NoError(t, err)
+
+		bal, _ := balance.GetBalance(context.Background(), userDto.ID)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(9), bal)
+	}))
+}
+
+func TestCannotCreateWithdrawalsIfNotEnoughBalance(t *testing.T) {
+	run := tests.UsingTransactions()
+
+	t.Run("", run(func(t *testing.T) {
+		userDto := helpers.RegisterForTest("a", "a")
+		var accrual int64 = 5
+		_, err := repositories.AddOrder(
+			context.Background(),
+			"a",
+			userDto.ID,
+			"",
+			&accrual,
+			time.Time{},
+		)
+		require.NoError(t, err)
+
+		ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
+		reqDto := &requests.Withdrawals{
+			Order: "a",
+			Sum:   10,
+		}
+		_, err = Create(ctx, reqDto)
+		assert.Equal(t, ErrorInsufficientFunds, err.Error())
 	}))
 }
 

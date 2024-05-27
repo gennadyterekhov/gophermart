@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -60,6 +61,58 @@ func Test204IfNoContent(t *testing.T) {
 		)
 
 		assert.Equal(t, http.StatusNoContent, responseStatusCode)
+	}))
+}
+
+func TestCannotCreateWithdrawalsWithIncorrectNumber(t *testing.T) {
+	run := tests.UsingTransactions()
+	tests.InitTestServer(GetRouter())
+
+	t.Run("", run(func(t *testing.T) {
+		regDto := helpers.RegisterForTest("a", "a")
+		var accrual int64 = 10
+		_, err := repositories.AddOrder(
+			context.Background(),
+			"a",
+			regDto.ID,
+			"",
+			&accrual,
+			time.Time{},
+		)
+		require.NoError(t, err)
+
+		rawJSON := `{"order":"123", "sum":1}`
+		responseStatusCode := tests.SendPost(
+			t,
+			tests.TestServer,
+			"/api/user/balance/withdraw",
+			"application/json",
+			regDto.Token,
+			bytes.NewBuffer([]byte(rawJSON)),
+		)
+
+		assert.Equal(t, http.StatusUnprocessableEntity, responseStatusCode)
+	}))
+}
+
+func Test402WhenNotEnoughBalance(t *testing.T) {
+	run := tests.UsingTransactions()
+	tests.InitTestServer(GetRouter())
+
+	t.Run("", run(func(t *testing.T) {
+		regDto := helpers.RegisterForTest("a", "a")
+
+		rawJSON := `{"order":"4417123456789113", "sum":1}`
+		responseStatusCode := tests.SendPost(
+			t,
+			tests.TestServer,
+			"/api/user/balance/withdraw",
+			"application/json",
+			regDto.Token,
+			bytes.NewBuffer([]byte(rawJSON)),
+		)
+
+		assert.Equal(t, http.StatusPaymentRequired, responseStatusCode)
 	}))
 }
 
