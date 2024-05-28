@@ -16,7 +16,7 @@ import (
 func Handler() http.Handler {
 	return middleware.WithoutAuth(
 		http.HandlerFunc(login),
-		middleware.ContentTypeJson,
+		middleware.ContentTypeJSON,
 	)
 }
 

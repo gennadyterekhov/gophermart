@@ -32,6 +32,14 @@ func setupTestServer() {
 		).ServeHTTP,
 	)
 	testRouter.Post(
+		"/json",
+		ContentTypeJSON(
+			http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+				res.WriteHeader(200)
+			}),
+		).ServeHTTP,
+	)
+	testRouter.Post(
 		"/luhn",
 		Luhn(
 			http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {

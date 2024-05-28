@@ -7,7 +7,7 @@ import (
 	"github.com/gennadyterekhov/gophermart/internal/storage"
 )
 
-func GetUserById(ctx context.Context, id int64) (*models.User, error) {
+func GetUserByID(ctx context.Context, id int64) (*models.User, error) {
 	const query = `SELECT id, login, password from users WHERE  id = $1`
 	row := storage.DBClient.Connection.QueryRowContext(ctx, query, id)
 	if row.Err() != nil {

@@ -15,16 +15,14 @@ func GetRouter() chi.Router {
 }
 
 func registerRoutes(router chi.Router) {
-	router.Head("/", HeadHandler)
-
 	router.Post("/api/user/login", login.Handler().ServeHTTP)
 	router.Post("/api/user/register", register.Handler().ServeHTTP)
 
-	router.Get("/api/user/balance", TempHandler().ServeHTTP)
+	// router.Get("/api/user/balance", TempHandler().ServeHTTP)
 
 	router.Get("/api/user/withdrawals", withdrawals.Handler().ServeHTTP)
 	router.Post("/api/user/balance/withdraw", withdrawals.PostHandler().ServeHTTP)
 
-	router.Get("/api/user/orders", TempHandler().ServeHTTP)
-	router.Post("/api/user/orders", TempHandler().ServeHTTP)
+	// router.Get("/api/user/orders", TempHandler().ServeHTTP)
+	// router.Post("/api/user/orders", TempHandler().ServeHTTP)
 }

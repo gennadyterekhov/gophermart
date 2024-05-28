@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	ContextUserIDKey = "user_id"
+	ContextUserIDKey ContextStorageKey = "user_id"
 )
 
 func Auth(next http.Handler) http.Handler {

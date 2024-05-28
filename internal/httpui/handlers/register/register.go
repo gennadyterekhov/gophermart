@@ -13,7 +13,7 @@ import (
 func Handler() http.Handler {
 	return middleware.WithoutAuth(
 		http.HandlerFunc(register),
-		middleware.ContentTypeJson,
+		middleware.ContentTypeJSON,
 	)
 }
 

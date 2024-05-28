@@ -39,6 +39,7 @@ func afterEach(t *testing.T) {
 	var err error
 
 	_, err = storage.DBClient.Connection.Exec("ROLLBACK TO SAVEPOINT test")
+	assert.NoError(t, err)
 	err = storage.DBClient.Connection.Rollback()
 	assert.NoError(t, err)
 

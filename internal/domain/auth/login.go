@@ -37,12 +37,12 @@ func Login(ctx context.Context, reqDto *requests.Login) (*responses.Login, error
 	return &resDto, nil
 }
 
-func checkPassword(plainPassword string, hashFromDb string) error {
+func checkPassword(plainPassword string, hashFromDB string) error {
 	// ComparePasswordAndHash performs a constant-time comparison between a
 	// plain-text password and Argon2id hash, using the parameters and salt
 	// contained in the hash. It returns true if they match, otherwise it returns
 	// false.
-	match, err := argon2id.ComparePasswordAndHash(plainPassword, hashFromDb)
+	match, err := argon2id.ComparePasswordAndHash(plainPassword, hashFromDB)
 	if err != nil {
 		logger.ZapSugarLogger.Errorln(err.Error())
 		return err

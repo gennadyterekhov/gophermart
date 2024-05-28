@@ -18,14 +18,14 @@ import (
 func Handler() http.Handler {
 	return middleware.WithAuth(
 		http.HandlerFunc(withdrawals),
-		middleware.ContentTypeJson,
+		middleware.ContentTypeJSON,
 	)
 }
 
 func PostHandler() http.Handler {
 	return middleware.WithAuth(
 		http.HandlerFunc(createWithdrawal),
-		middleware.ContentTypeJson,
+		middleware.ContentTypeJSON,
 		middleware.Luhn,
 	)
 }

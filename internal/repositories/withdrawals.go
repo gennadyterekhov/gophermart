@@ -44,22 +44,6 @@ func GetAllWithdrawalsForUser(ctx context.Context, userID int64) ([]models.Withd
 	return wdrs, nil
 }
 
-func GetWithdrawalById(ctx context.Context, id int64) (*models.Withdrawal, error) {
-	const query = `SELECT id, user_id, order_number, total_sum, processed_at FROM withdrawals WHERE id = $1`
-	row := storage.DBClient.Connection.QueryRowContext(ctx, query, id)
-	if row.Err() != nil {
-		return nil, row.Err()
-	}
-
-	wdr := models.Withdrawal{}
-	err := row.Scan(&(wdr.ID), &(wdr.UserID), &(wdr.OrderNumber), &(wdr.TotalSum), &(wdr.ProcessedAt))
-	if err != nil {
-		return nil, err
-	}
-
-	return &wdr, nil
-}
-
 func AddWithdrawal(
 	ctx context.Context,
 	userID int64,
