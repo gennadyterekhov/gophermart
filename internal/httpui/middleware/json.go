@@ -6,10 +6,10 @@ import (
 	"github.com/gennadyterekhov/gophermart/internal/logger"
 )
 
-func ContentTypeJson(next http.Handler) http.Handler {
+func ContentTypeJSON(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		if request != nil && request.Header.Get("Content-Type") != "application/json" {
-			logger.ZapSugarLogger.Debugln("ContentTypeJson middleware failed")
+			logger.ZapSugarLogger.Debugln("ContentTypeJSON middleware failed")
 			response.WriteHeader(http.StatusBadRequest)
 		}
 

@@ -18,13 +18,13 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestCanGetUserById(t *testing.T) {
+func TestCanGetUserByID(t *testing.T) {
 	run := tests.UsingTransactions()
 	t.Run("", run(func(t *testing.T) {
 		user, err := repositories.AddUser(context.Background(), "a", "a")
 		assert.NoError(t, err)
 
-		user, err = repositories.GetUserById(context.Background(), user.ID)
+		user, err = repositories.GetUserByID(context.Background(), user.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, "a", user.Login)
 		assert.Equal(t, "a", user.Password)

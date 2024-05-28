@@ -32,7 +32,7 @@ func TestCanRegister(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotEqual(t, "", resDto.Token)
 
-		user, err := repositories.GetUserById(context.Background(), resDto.ID)
+		user, err := repositories.GetUserByID(context.Background(), resDto.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, "a", user.Login)
 		assert.NotEqual(t, "a", user.Password)

@@ -4,7 +4,10 @@ import (
 	"net/http"
 )
 
-type Middleware func(http.Handler) http.Handler
+type (
+	ContextStorageKey string
+	Middleware        func(http.Handler) http.Handler
+)
 
 func WithAuth(h http.Handler, middlewares ...Middleware) http.Handler {
 	var allMiddlewares []Middleware

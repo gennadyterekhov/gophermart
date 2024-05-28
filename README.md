@@ -1,3 +1,21 @@
+# gophermart
+
+## how to run
+
+## tests
+
+### coverage
+to create coverage file  
+`go test -coverprofile=coverage.out ./...`  
+
+to see percentages:
+`go tool cover -func=coverage.out`  
+
+to see line by line coverage in browser:  
+`go tool cover -html=coverage.out`  
+
+
+# template
 # go-musthave-diploma-tpl
 
 Шаблон репозитория для индивидуального дипломного проекта курса «Go-разработчик»
@@ -47,4 +65,3 @@ after that, use this to connect to db in cli
 or
 
       psql -U gophermart_user -d gophermart_db_test
-
