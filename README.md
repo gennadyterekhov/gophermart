@@ -1,5 +1,7 @@
 # gophermart
+[ТЗ](https://practicum.yandex.ru/learn/go-advanced/courses/bd3d1b7f-c6b4-4321-bb62-9d246e13ebf1/sprints/261649/topics/e3e4d154-e4ee-4846-9fe4-41f750c16794/lessons/c0d20e78-c1a3-4f49-a13f-733496da984e/)
 
+[DB diagram](https://dbdiagram.io/d/6643a0239e85a46d55d83877)
 ## how to run
 
 ## tests
