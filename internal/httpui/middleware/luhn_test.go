@@ -28,6 +28,24 @@ func TestLuhnOk(t *testing.T) {
 	}))
 }
 
+func TestLuhnOkWhenTextPlain(t *testing.T) {
+	run := tests.UsingTransactions()
+	setupTestServer()
+
+	t.Run("", run(func(t *testing.T) {
+		responseStatusCode := tests.SendPost(
+			t,
+			tests.TestServer,
+			"/luhn",
+			"text/plain",
+			"",
+			bytes.NewBuffer([]byte("12345678903")),
+		)
+
+		assert.Equal(t, http.StatusOK, responseStatusCode)
+	}))
+}
+
 func Test422WhenNoOrderInBody(t *testing.T) {
 	run := tests.UsingTransactions()
 	setupTestServer()

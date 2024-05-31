@@ -26,5 +26,5 @@ func registerRoutes(router chi.Router) {
 	router.Post("/api/user/balance/withdraw", withdrawals.PostHandler().ServeHTTP)
 
 	router.Get("/api/user/orders", orders.Handler().ServeHTTP)
-	// router.Post("/api/user/orders", TempHandler().ServeHTTP)
+	router.Post("/api/user/orders", orders.PostHandler().ServeHTTP)
 }
