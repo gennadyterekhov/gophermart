@@ -7,10 +7,10 @@ import (
 )
 
 func Withdrawals(resDto *[]models.Withdrawal) ([]byte, error) {
-	//resDtoWithFloats := make([]models.WithdrawalExternal, len(*resDto))
+	//resDtoWithFloats := make([]models.WithdrawalFloats, len(*resDto))
 	//
 	//for i := range *resDto {
-	//	resDtoWithFloats = append(resDtoWithFloats, models.WithdrawalExternal{
+	//	resDtoWithFloats = append(resDtoWithFloats, models.WithdrawalFloats{
 	//		ID:          (*resDto)[i].ID,
 	//		UserID:      (*resDto)[i].UserID,
 	//		OrderNumber: (*resDto)[i].OrderNumber,
@@ -19,7 +19,7 @@ func Withdrawals(resDto *[]models.Withdrawal) ([]byte, error) {
 	//	})
 	//}
 	//serialized, err := json.Marshal(resDtoWithFloats)
-	// TODO serialize with floats
+	// TODO serialize with floats https://github.com/gennadyterekhov/gophermart/issues/40
 	serialized, err := json.Marshal(*resDto)
 	if err != nil {
 		return []byte{}, err

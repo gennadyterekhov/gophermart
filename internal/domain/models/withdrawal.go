@@ -10,7 +10,7 @@ type Withdrawal struct {
 	ProcessedAt time.Time
 }
 
-type WithdrawalExternal struct {
+type WithdrawalFloats struct {
 	ID          int64
 	UserID      int64
 	OrderNumber string
