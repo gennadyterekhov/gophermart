@@ -40,6 +40,38 @@ func GetAllOrdersForUser(ctx context.Context, userID int64) ([]models.Order, err
 	return orders, nil
 }
 
+func GetOrderById(ctx context.Context, number string) (*models.Order, error) {
+	const query = `SELECT number, user_id, status, accrual, uploaded_at FROM orders WHERE number = $1`
+	row := storage.DBClient.Connection.QueryRowContext(ctx, query, number)
+	if row.Err() != nil {
+		return nil, row.Err()
+	}
+
+	order := models.Order{}
+	err := row.Scan(&(order.Number), &(order.UserID), &(order.Status), &(order.Accrual), &(order.UploadedAt))
+	if err != nil {
+		return nil, err
+	}
+
+	return &order, nil
+}
+
+func GetOrderByIdAndUserId(ctx context.Context, number string, userID int64) (*models.Order, error) {
+	const query = `SELECT number, user_id, status, accrual, uploaded_at FROM orders WHERE number = $1 and user_id = $2`
+	row := storage.DBClient.Connection.QueryRowContext(ctx, query, number, userID)
+	if row.Err() != nil {
+		return nil, row.Err()
+	}
+
+	order := models.Order{}
+	err := row.Scan(&(order.Number), &(order.UserID), &(order.Status), &(order.Accrual), &(order.UploadedAt))
+	if err != nil {
+		return nil, err
+	}
+
+	return &order, nil
+}
+
 func AddOrder(
 	ctx context.Context,
 	number string,

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -93,5 +94,107 @@ func TestOrders401IfNoToken(t *testing.T) {
 		)
 
 		assert.Equal(t, http.StatusUnauthorized, responseStatusCode)
+	}))
+}
+
+func Test200IfAlreadyUploaded(t *testing.T) {
+	run := tests.UsingTransactions()
+	tests.InitTestServer(GetRouter())
+
+	t.Run("", run(func(t *testing.T) {
+		var err error
+		regDto := helpers.RegisterForTest("a", "a")
+		_, err = repositories.AddOrder(
+			context.Background(),
+			"12345678903",
+			regDto.ID,
+			"st1", nil,
+			time.Time{},
+		)
+		assert.NoError(t, err)
+
+		responseStatusCode := tests.SendPost(
+			t,
+			tests.TestServer,
+			"/api/user/orders",
+			"text/plain",
+			regDto.Token,
+			bytes.NewBuffer([]byte("12345678903")),
+		)
+
+		require.Equal(t, http.StatusOK, responseStatusCode)
+	}))
+}
+
+func Test202IfUploadedFirstTime(t *testing.T) {
+	run := tests.UsingTransactions()
+	tests.InitTestServer(GetRouter())
+
+	t.Run("", run(func(t *testing.T) {
+		var _ error
+		regDto := helpers.RegisterForTest("a", "a")
+
+		responseStatusCode := tests.SendPost(
+			t,
+			tests.TestServer,
+			"/api/user/orders",
+			"text/plain",
+			regDto.Token,
+			bytes.NewBuffer([]byte("12345678903")),
+		)
+
+		require.Equal(t, http.StatusAccepted, responseStatusCode)
+	}))
+}
+
+func Test409IfAlreadyUploadedByAnotherUser(t *testing.T) {
+	run := tests.UsingTransactions()
+	tests.InitTestServer(GetRouter())
+
+	t.Run("", run(func(t *testing.T) {
+		var err error
+		anotherUser := helpers.RegisterForTest("another", "a")
+
+		_, err = repositories.AddOrder(
+			context.Background(),
+			"12345678903",
+			anotherUser.ID,
+			"st1", nil,
+			time.Time{},
+		)
+		assert.NoError(t, err)
+
+		regDto := helpers.RegisterForTest("a", "a")
+		responseStatusCode := tests.SendPost(
+			t,
+			tests.TestServer,
+			"/api/user/orders",
+			"text/plain",
+			regDto.Token,
+			bytes.NewBuffer([]byte("12345678903")),
+		)
+
+		require.Equal(t, http.StatusConflict, responseStatusCode)
+	}))
+}
+
+func Test422IfInvalidNumber(t *testing.T) {
+	run := tests.UsingTransactions()
+	tests.InitTestServer(GetRouter())
+
+	t.Run("", run(func(t *testing.T) {
+		var _ error
+		regDto := helpers.RegisterForTest("a", "a")
+
+		responseStatusCode := tests.SendPost(
+			t,
+			tests.TestServer,
+			"/api/user/orders",
+			"text/plain",
+			regDto.Token,
+			bytes.NewBuffer([]byte("1234567890")),
+		)
+
+		require.Equal(t, http.StatusUnprocessableEntity, responseStatusCode)
 	}))
 }

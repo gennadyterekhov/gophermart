@@ -26,24 +26,20 @@ func Luhn(next http.Handler) http.Handler {
 		}
 		req.Body = io.NopCloser(bytes.NewBuffer(reqBody))
 
-		type jsonWithOrder struct {
-			Order string `json:"order,omitempty"`
+		var number string
+		if req.Header.Get("Content-Type") == "text/plain" {
+			number, err = getNumberFromTextBody(reqBody)
+		} else {
+			number, err = getNumberFromJSONBody(reqBody)
 		}
-		jsonWithOrderInstance := jsonWithOrder{}
 
-		err = json.Unmarshal(reqBody, &jsonWithOrderInstance)
 		if err != nil {
 			logger.ZapSugarLogger.Error(err.Error())
-			res.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		if jsonWithOrderInstance.Order == "" {
 			res.WriteHeader(http.StatusUnprocessableEntity)
 			return
 		}
 
-		err = isOk(jsonWithOrderInstance.Order)
+		err = isOk(number)
 		if err != nil {
 			logger.ZapSugarLogger.Error(err.Error())
 			res.WriteHeader(http.StatusUnprocessableEntity)
@@ -52,6 +48,29 @@ func Luhn(next http.Handler) http.Handler {
 
 		next.ServeHTTP(res, req)
 	})
+}
+
+func getNumberFromTextBody(reqBody []byte) (string, error) {
+	return string(reqBody), nil
+}
+
+func getNumberFromJSONBody(reqBody []byte) (string, error) {
+	var err error
+	type jsonWithOrder struct {
+		Order string `json:"order,omitempty"`
+	}
+	jsonWithOrderInstance := jsonWithOrder{}
+
+	err = json.Unmarshal(reqBody, &jsonWithOrderInstance)
+	if err != nil {
+		return "", err
+	}
+
+	if jsonWithOrderInstance.Order == "" {
+		return "", fmt.Errorf("order field is empty")
+	}
+
+	return jsonWithOrderInstance.Order, nil
 }
 
 func isOk(number string) error {
