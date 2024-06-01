@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gennadyterekhov/gophermart/internal/domain/models"
+	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
 
 	"github.com/gennadyterekhov/gophermart/internal/repositories"
 	"github.com/gennadyterekhov/gophermart/internal/tests"
@@ -51,7 +51,7 @@ func TestCanSendOrdersRequest(t *testing.T) {
 		)
 
 		require.Equal(t, http.StatusOK, responseStatusCode)
-		responseBody := make([]models.OrderFloats, 0)
+		responseBody := make([]order.OrderFloats, 0)
 
 		err = json.Unmarshal(bodyAsBytes, &responseBody)
 		assert.NoError(t, err)

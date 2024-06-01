@@ -41,9 +41,9 @@ func getConfig() *Config {
 	const testDBDsn = "host=localhost user=gophermart_user password=gophermart_pass dbname=gophermart_db_test sslmode=disable"
 
 	flags := Config{
-		Addr:       "localhost:8080",
+		Addr:       "localhost:8888",
 		DBDsn:      testDBDsn,
-		AccrualURL: "",
+		AccrualURL: "http://localhost:8080",
 	}
 	overwriteWithEnv(&flags)
 
