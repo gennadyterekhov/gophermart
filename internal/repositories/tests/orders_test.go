@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gennadyterekhov/gophermart/internal/domain/models"
+	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
+
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
 	"github.com/gennadyterekhov/gophermart/internal/repositories"
 	"github.com/gennadyterekhov/gophermart/internal/tests"
@@ -40,7 +41,7 @@ func TestCanInsertOrder(t *testing.T) {
 func createDifferentOrders(
 	t *testing.T,
 	userDto *responses.Register,
-) (*models.Order, *models.Order, *models.Order) {
+) (*order.Order, *order.Order, *order.Order) {
 	orderNewest, err := repositories.AddOrder(
 		context.Background(),
 		"1",

@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/gennadyterekhov/gophermart/internal/domain/models"
+	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
+
 	"github.com/gennadyterekhov/gophermart/internal/domain/requests"
 	"github.com/gennadyterekhov/gophermart/internal/httpui/middleware"
 	"github.com/gennadyterekhov/gophermart/internal/repositories"
@@ -19,7 +20,7 @@ const (
 	ErrorNumberAlreadyUploadedByAnotherUser = "ErrorNumberAlreadyUploadedByAnotherUser"
 )
 
-func GetAll(ctx context.Context) (*[]models.Order, error) {
+func GetAll(ctx context.Context) (*[]order.Order, error) {
 	userID, ok := ctx.Value(middleware.ContextUserIDKey).(int64)
 	if !ok {
 		return nil, fmt.Errorf("cannot get user_id from context")
@@ -44,7 +45,7 @@ func Create(ctx context.Context, reqDto *requests.Orders) error {
 	if !ok {
 		return fmt.Errorf("cannot get user_id from context")
 	}
-	var order *models.Order
+	var order *order.Order
 	order, err = repositories.GetOrderByIdAndUserId(ctx, reqDto.Number, userID)
 	if err == nil && order != nil {
 		return fmt.Errorf(ErrorNumberAlreadyUploaded)

@@ -6,7 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gennadyterekhov/gophermart/internal/domain/models"
+	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
+
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
 	"github.com/gennadyterekhov/gophermart/internal/httpui/middleware"
 	"github.com/gennadyterekhov/gophermart/internal/repositories"
@@ -54,7 +55,7 @@ func TestNoContentReturnsError(t *testing.T) {
 func createDifferentOrders(
 	t *testing.T,
 	userDto *responses.Register,
-) (*models.Order, *models.Order, *models.Order) {
+) (*order.Order, *order.Order, *order.Order) {
 	var ten int64 = 10
 	withdrawalNewest, err := repositories.AddOrder(
 		context.Background(),
