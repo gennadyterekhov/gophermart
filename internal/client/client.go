@@ -34,8 +34,7 @@ const (
 	ErrorUnknownResponse = "unknown response"
 )
 
-// SendOrderToAccrual sends orders and returns status. if already exists, does not create new order
-func SendOrderToAccrual(number string) (*AccrualClientResponse, error) {
+func GetStatus(number string) (*AccrualClientResponse, error) {
 	var err error
 	path := fmt.Sprintf("/api/orders/%v", number)
 	url := config.ServerConfig.AccrualURL + path
@@ -72,6 +71,32 @@ func SendOrderToAccrual(number string) (*AccrualClientResponse, error) {
 	}
 
 	return responseDto, fmt.Errorf(ErrorUnknownResponse)
+}
+
+func RegisterOrderInAccrual(number string) (int, error) {
+	bodyBytes := []byte(`
+			{
+				"order": "` + number + `",
+				"goods": [
+					{
+						"description": "Стиральная машинка LG",
+						"price": 47399.99
+					}
+				]
+			}
+		`)
+	var client *resty.Client = resty.New()
+	url := config.ServerConfig.AccrualURL + "/api/orders"
+	req := client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(bodyBytes)
+
+	resp, err := req.Post(url)
+	if err != nil {
+		return 0, err
+	}
+
+	return resp.StatusCode(), nil
 }
 
 func processSuccessfulResponse(response *resty.Response) (*CorrectResponse, error) {

@@ -41,7 +41,7 @@ func GetAllOrdersForUser(ctx context.Context, userID int64) ([]order.Order, erro
 	return orders, nil
 }
 
-func GetOrderById(ctx context.Context, number string) (*order.Order, error) {
+func GetOrderByID(ctx context.Context, number string) (*order.Order, error) {
 	const query = `SELECT number, user_id, status, accrual, uploaded_at FROM orders WHERE number = $1`
 	row := storage.DBClient.Connection.QueryRowContext(ctx, query, number)
 	if row.Err() != nil {
@@ -57,7 +57,7 @@ func GetOrderById(ctx context.Context, number string) (*order.Order, error) {
 	return &order, nil
 }
 
-func GetOrderByIdAndUserId(ctx context.Context, number string, userID int64) (*order.Order, error) {
+func GetOrderByIDAndUserID(ctx context.Context, number string, userID int64) (*order.Order, error) {
 	const query = `SELECT number, user_id, status, accrual, uploaded_at FROM orders WHERE number = $1 and user_id = $2`
 	row := storage.DBClient.Connection.QueryRowContext(ctx, query, number, userID)
 	if row.Err() != nil {
@@ -98,4 +98,20 @@ func AddOrder(
 	}
 
 	return &order, nil
+}
+
+func UpdateOrder(
+	ctx context.Context,
+	number string,
+	status string,
+	accrual *int64,
+) error {
+	const query = `UPDATE orders SET status = $1, accrual = $2 WHERE number = $3;`
+
+	_, err := storage.DBClient.Connection.ExecContext(ctx, query, status, accrual, number)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

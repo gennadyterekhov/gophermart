@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
-	"time"
 )
 
 const (
@@ -30,8 +29,6 @@ func Validate(number string) error {
 
 // Generate will generate a valid luhn number of the provided length
 func Generate(length int) string {
-	rand.Seed(time.Now().UTC().UnixNano())
-
 	var s strings.Builder
 	for i := 0; i < length-1; i++ {
 		s.WriteString(strconv.Itoa(rand.Intn(9)))

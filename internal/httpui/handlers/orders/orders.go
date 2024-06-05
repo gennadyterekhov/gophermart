@@ -74,6 +74,7 @@ func sendOrderToProcessing(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(http.StatusOK)
 			return
 		}
+		logger.ZapSugarLogger.Errorln(err.Error())
 
 		if err.Error() == domain.ErrorNumberAlreadyUploadedByAnotherUser {
 			http.Error(res, err.Error(), http.StatusConflict)
@@ -81,6 +82,7 @@ func sendOrderToProcessing(res http.ResponseWriter, req *http.Request) {
 		}
 
 		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	res.WriteHeader(http.StatusAccepted)
