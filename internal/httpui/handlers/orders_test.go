@@ -126,27 +126,6 @@ func Test200IfAlreadyUploaded(t *testing.T) {
 	}))
 }
 
-func Test202IfUploadedFirstTime(t *testing.T) {
-	run := tests.UsingTransactions()
-	tests.InitTestServer(GetRouter())
-
-	t.Run("", run(func(t *testing.T) {
-		var _ error
-		regDto := helpers.RegisterForTest("a", "a")
-
-		responseStatusCode := tests.SendPost(
-			t,
-			tests.TestServer,
-			"/api/user/orders",
-			"text/plain",
-			regDto.Token,
-			bytes.NewBuffer([]byte("12345678903")),
-		)
-
-		require.Equal(t, http.StatusAccepted, responseStatusCode)
-	}))
-}
-
 func Test409IfAlreadyUploadedByAnotherUser(t *testing.T) {
 	run := tests.UsingTransactions()
 	tests.InitTestServer(GetRouter())

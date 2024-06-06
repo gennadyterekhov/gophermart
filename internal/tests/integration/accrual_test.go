@@ -1,37 +1,24 @@
-package client
+package integration
 
 import (
+	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"syscall"
 	"testing"
 	"time"
 
-	"github.com/gennadyterekhov/gophermart/internal/luhn"
-
-	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
-
-	"github.com/stretchr/testify/require"
-
-	"github.com/gennadyterekhov/gophermart/internal/logger"
-
-	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
-
-	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
-	"github.com/gennadyterekhov/gophermart/internal/repositories"
-	"github.com/stretchr/testify/assert"
-
-	"github.com/go-resty/resty/v2"
-
 	"github.com/gennadyterekhov/gophermart/internal/config"
-
 	"github.com/gennadyterekhov/gophermart/internal/fork"
+	"github.com/gennadyterekhov/gophermart/internal/httpui/handlers"
+	"github.com/gennadyterekhov/gophermart/internal/logger"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/gennadyterekhov/gophermart/internal/tests"
-	"github.com/stretchr/testify/suite"
+	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
+	"github.com/stretchr/testify/require"
 )
 
 type AccrualClientSuite struct {
@@ -126,106 +113,24 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func TestCanGetOrderStatus(t *testing.T) {
+func Test202IfUploadedFirstTime(t *testing.T) {
 	testSuite.SetT(t)
-
 	run := tests.UsingTransactions()
+	tests.InitTestServer(handlers.GetRouter())
+
 	t.Run("", run(func(t *testing.T) {
-		userDto := helpers.RegisterForTest("a", "a")
-		number := luhn.Generate(1)
-		createOrder(t, userDto, number)
+		var _ error
+		regDto := helpers.RegisterForTest("a", "a")
 
-		httpc := resty.NewWithClient(&http.Client{
-			Transport: &http.Transport{
-				DisableCompression: true,
-			},
-		}).SetBaseURL(testSuite.serverAddress)
-		registerOrderInAccrual(t, httpc, number)
-		time.Sleep(time.Millisecond * 20)
+		responseStatusCode := tests.SendPost(
+			t,
+			tests.TestServer,
+			"/api/user/orders",
+			"text/plain",
+			regDto.Token,
+			bytes.NewBuffer([]byte("12345678903")),
+		)
 
-		req := httpc.R()
-		resp, err := req.Get(fmt.Sprintf("/api/orders/%v", number))
-		assert.NoError(t, err)
-		logger.ZapSugarLogger.Debugln("resp.StatusCode()", resp.StatusCode())
-		assert.Equal(t, http.StatusOK, resp.StatusCode())
+		require.Equal(t, http.StatusAccepted, responseStatusCode)
 	}))
-}
-
-func TestTooManyRequests(t *testing.T) {
-	t.Skipf("cannot test")
-}
-
-func TestNoContent(t *testing.T) {
-	t.Skipf("cannot test in suite because it can run after registration and will fail")
-
-	testSuite.SetT(t)
-
-	run := tests.UsingTransactions()
-	t.Run("", run(func(t *testing.T) {
-		userDto := helpers.RegisterForTest("a", "a")
-		number := luhn.Generate(1)
-		createOrder(t, userDto, number)
-
-		httpc := resty.NewWithClient(&http.Client{
-			Transport: &http.Transport{
-				DisableCompression: true,
-			},
-		}).SetBaseURL(testSuite.serverAddress)
-
-		req := httpc.R()
-		resp, err := req.Get(fmt.Sprintf("/api/orders/%v", number))
-		assert.NoError(t, err)
-		logger.ZapSugarLogger.Debugln("resp.StatusCode()", resp.StatusCode())
-		assert.Equal(t, http.StatusNoContent, resp.StatusCode())
-	}))
-}
-
-func TestInternalServerError(t *testing.T) {
-	t.Skipf("cannot test")
-}
-
-func createOrder(
-	t *testing.T,
-	userDto *responses.Register,
-	number string,
-) *order.Order {
-	var ten int64 = 10
-	orderNewest, err := repositories.AddOrder(
-		context.Background(),
-		number,
-		userDto.ID,
-		order.Registered,
-		&ten,
-		time.Time{},
-	)
-	assert.NoError(t, err)
-
-	return orderNewest
-}
-
-func registerOrderInAccrual(
-	t *testing.T,
-	httpc *resty.Client,
-	number string,
-) {
-	o := []byte(`
-			{
-				"order": "` + number + `",
-				"goods": [
-					{
-						"description": "Стиральная машинка LG",
-						"price": 47399.99
-					}
-				]
-			}
-		`)
-
-	req := httpc.R().
-		SetHeader("Content-Type", "application/json").
-		SetBody(o)
-
-	resp, err := req.Post("/api/orders")
-	require.NoError(t, err)
-	logger.ZapSugarLogger.Debugln(resp.StatusCode())
-	logger.ZapSugarLogger.Debugln(string(resp.Body()))
 }

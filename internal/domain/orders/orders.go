@@ -3,6 +3,9 @@ package orders
 import (
 	"context"
 	"fmt"
+	"time"
+
+	"github.com/gennadyterekhov/gophermart/internal/client"
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
 
@@ -39,22 +42,40 @@ func GetAll(ctx context.Context) (*[]order.Order, error) {
 }
 
 func Create(ctx context.Context, reqDto *requests.Orders) error {
-	// TODO https://github.com/gennadyterekhov/gophermart/issues/10
 	var err error
 	userID, ok := ctx.Value(middleware.ContextUserIDKey).(int64)
 	if !ok {
 		return fmt.Errorf("cannot get user_id from context")
 	}
-	var order *order.Order
-	order, err = repositories.GetOrderByIdAndUserId(ctx, reqDto.Number, userID)
-	if err == nil && order != nil {
+	var orderObj *order.Order
+	orderObj, err = repositories.GetOrderByIDAndUserID(ctx, reqDto.Number, userID)
+	if err == nil && orderObj != nil {
 		return fmt.Errorf(ErrorNumberAlreadyUploaded)
 	}
 
-	order, err = repositories.GetOrderById(ctx, reqDto.Number)
-	if err == nil && order != nil {
+	orderObj, err = repositories.GetOrderByID(ctx, reqDto.Number)
+	if err == nil && orderObj != nil {
 		return fmt.Errorf(ErrorNumberAlreadyUploadedByAnotherUser)
 	}
+
+	orderObj, err = repositories.AddOrder(
+		ctx,
+		reqDto.Number,
+		userID,
+		order.Registered,
+		nil,
+		time.Time{},
+	)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.RegisterOrderInAccrual(reqDto.Number)
+	if err != nil {
+		return err
+	}
+
+	client.LaunchAutoUpdate(orderObj)
 
 	return nil
 }

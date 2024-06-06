@@ -52,6 +52,12 @@ func TestNoContentReturnsError(t *testing.T) {
 	}))
 }
 
+func TestCanCreateOrder(t *testing.T) {
+}
+
+func TestCanOrderStatusIsAutomaticallyUpdated(t *testing.T) {
+}
+
 func createDifferentOrders(
 	t *testing.T,
 	userDto *responses.Register,
