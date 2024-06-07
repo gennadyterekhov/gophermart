@@ -4,6 +4,27 @@
 [DB diagram](https://dbdiagram.io/d/6643a0239e85a46d55d83877)
 ## how to run
 
+### db installation (one-time use)
+
+      sudo -i -u postgres
+      psql -U postgres
+      postgres=# create database gophermart_db;
+      postgres=# create database gophermart_db_test;
+      postgres=# create user gophermart_user with encrypted password 'gophermart_pass';
+      postgres=# grant all privileges on database gophermart_db to gophermart_user;
+      postgres=# grant all privileges on database gophermart_db_test to gophermart_user;
+      alter database gophermart_db owner to gophermart_user;
+      alter database gophermart_db_test owner to gophermart_user;
+      alter schema public owner to gophermart_user;
+
+after that, use this to connect to db in cli
+
+      psql -U gophermart_user -d gophermart_db
+
+or
+
+      psql -U gophermart_user -d gophermart_db_test
+
 ## tests
 
 ### coverage
@@ -16,6 +37,8 @@ to see percentages:
 to see line by line coverage in browser:  
 `go tool cover -html=coverage.out`  
 
+### run ci tests locally
+      ./ci_tests.sh
 
 # template
 # go-musthave-diploma-tpl
@@ -47,23 +70,3 @@ git fetch template && git checkout template/master .github
 ## env
 JWT_SIGNING_KEY
 
-## db installation (one-time use)
-
-      sudo -i -u postgres
-      psql -U postgres
-      postgres=# create database gophermart_db;
-      postgres=# create database gophermart_db_test;
-      postgres=# create user gophermart_user with encrypted password 'gophermart_pass';
-      postgres=# grant all privileges on database gophermart_db to gophermart_user;
-      postgres=# grant all privileges on database gophermart_db_test to gophermart_user;
-      alter database gophermart_db owner to gophermart_user;
-      alter database gophermart_db_test owner to gophermart_user;
-      alter schema public owner to gophermart_user;
-
-after that, use this to connect to db in cli
-
-      psql -U gophermart_user -d gophermart_db
-
-or
-
-      psql -U gophermart_user -d gophermart_db_test
