@@ -107,7 +107,6 @@ func processSuccessfulResponse(response *resty.Response) (*CorrectResponse, erro
 		return nil, err
 	}
 
-	// TODO update statuses https://github.com/gennadyterekhov/gophermart/issues/14
 	return responseDto, nil
 }
 

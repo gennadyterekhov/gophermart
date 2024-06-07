@@ -47,14 +47,14 @@ func (suite *AccrualClientSuite) serverUp(ctx context.Context, envs, args []stri
 
 	err := suite.serverProcess.Start(ctx)
 	if err != nil {
-		logger.ZapSugarLogger.Debugln(err.Error())
+		logger.CustomLogger.Debugln(err.Error())
 		suite.T().Errorf("Невозможно запустить процесс командой %q: %s. Переменные окружения: %+v, флаги командной строки: %+v", suite.serverProcess, err, envs, args)
 		return
 	}
 
 	err = suite.serverProcess.WaitPort(ctx, "tcp", port)
 	if err != nil {
-		logger.ZapSugarLogger.Debugln(err.Error()) // context deadline exceeded
+		logger.CustomLogger.Debugln(err.Error()) // context deadline exceeded
 		suite.T().Errorf("Не удалось дождаться пока порт %s станет доступен для запроса: %s", port, err)
 		return
 	}
@@ -74,12 +74,12 @@ func (suite *AccrualClientSuite) serverShutdown() {
 		if errors.Is(err, os.ErrProcessDone) {
 			return
 		}
-		logger.ZapSugarLogger.Debugf("Не удалось остановить процесс с помощью сигнала ОС: %s", err)
+		logger.CustomLogger.Debugln("Не удалось остановить процесс с помощью сигнала ОС: %s", err.Error())
 		return
 	}
 
 	if exitCode > 0 {
-		logger.ZapSugarLogger.Debugf("Процесс завершился с не нулевым статусом %d", exitCode)
+		logger.CustomLogger.Debugln("Процесс завершился с не нулевым статусом %d", exitCode)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
@@ -87,11 +87,11 @@ func (suite *AccrualClientSuite) serverShutdown() {
 
 	out := suite.serverProcess.Stderr(ctx)
 	if len(out) > 0 {
-		logger.ZapSugarLogger.Debugf("Получен STDERR лог процесса:\n\n%s", string(out))
+		logger.CustomLogger.Debugln("Получен STDERR лог процесса:\n\n%s", string(out))
 	}
 	out = suite.serverProcess.Stdout(ctx)
 	if len(out) > 0 {
-		logger.ZapSugarLogger.Debugf("Получен STDOUT лог процесса:\n\n%s", string(out))
+		logger.CustomLogger.Debugln("Получен STDOUT лог процесса:\n\n%s", string(out))
 	}
 }
 

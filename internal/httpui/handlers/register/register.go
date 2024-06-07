@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/gennadyterekhov/gophermart/internal/logger"
+
 	domain "github.com/gennadyterekhov/gophermart/internal/domain/auth/register"
 	"github.com/gennadyterekhov/gophermart/internal/domain/requests"
 	"github.com/gennadyterekhov/gophermart/internal/httpui/middleware"
@@ -13,14 +15,18 @@ import (
 func Handler() http.Handler {
 	return middleware.WithoutAuth(
 		http.HandlerFunc(register),
-		middleware.ContentTypeJSON,
+		middleware.RequestContentTypeJSON,
 	)
 }
 
 func register(res http.ResponseWriter, req *http.Request) {
+	logger.CustomLogger.Debugln("/api/user/register handler")
+
 	var err error
 	reqDto, err := getRequestDto(req)
 	if err != nil {
+		logger.CustomLogger.Errorln(err.Error())
+
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -32,17 +38,26 @@ func register(res http.ResponseWriter, req *http.Request) {
 		if err.Error() == domain.ErrorNotUniqueLogin {
 			status = http.StatusConflict
 		}
+		logger.CustomLogger.Errorln(err.Error())
+
 		http.Error(res, err.Error(), status)
 		return
 	}
+	res.Header().Set("Authorization", resDto.Token)
+
 	resBody, err := serializers.Register(resDto)
 	if err != nil {
+		logger.CustomLogger.Errorln(err.Error())
+
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	logger.CustomLogger.Debugln("returning body", string(resBody))
 	_, err = res.Write(resBody)
 	if err != nil {
+		logger.CustomLogger.Errorln(err.Error())
+
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}

@@ -33,7 +33,7 @@ func setupTestServer() {
 	)
 	testRouter.Post(
 		"/json",
-		ContentTypeJSON(
+		RequestContentTypeJSON(
 			http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 				res.WriteHeader(200)
 			}),

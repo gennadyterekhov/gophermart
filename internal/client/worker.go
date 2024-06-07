@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
@@ -25,6 +26,11 @@ func createWorker() *Worker {
 }
 
 func handleJob(job *Job) error {
+	if job == nil {
+		return fmt.Errorf("job is nil in worker")
+	}
+	logger.CustomLogger.Debugln("job for order", job.OrderNumber)
+
 	var retryAfter int64
 
 	mu.Lock()
@@ -32,6 +38,7 @@ func handleJob(job *Job) error {
 	mu.Unlock()
 
 	if retryAfter > 0 {
+		logger.CustomLogger.Debugln("sleeping for", retryAfter)
 		time.Sleep(time.Duration(retryAfter) * time.Second)
 	}
 
@@ -45,6 +52,11 @@ func handleJob(job *Job) error {
 		RetryAfter = 0
 		mu.Unlock()
 
+		logger.CustomLogger.Debugln(
+			"request to accrual with order "+job.OrderNumber+" was successful. new status",
+			response.CorrectResponse.Status,
+		)
+
 		job.OrderStatus = response.CorrectResponse.Status
 		if response.CorrectResponse.Accrual != nil {
 			intAccrual := int64(100.0 * (*response.CorrectResponse.Accrual))
@@ -55,7 +67,7 @@ func handleJob(job *Job) error {
 		}
 
 		if err != nil {
-			logger.ZapSugarLogger.Errorln(err.Error())
+			logger.CustomLogger.Errorln(err.Error())
 			jobsChannel <- job
 			return err
 		}
@@ -66,10 +78,10 @@ func handleJob(job *Job) error {
 	}
 
 	if response.TooManyRequestsResponse != nil {
-		jobsChannel <- job
 		mu.Lock()
 		RetryAfter = response.TooManyRequestsResponse.RetryAfter
 		mu.Unlock()
+		jobsChannel <- job
 	}
 
 	return nil
@@ -81,7 +93,7 @@ func workerPool() {
 			for j := range jobsChannel {
 				err := handleJob(j)
 				if err != nil {
-					logger.ZapSugarLogger.Errorln("error in worker", err.Error())
+					logger.CustomLogger.Errorln("error in worker", err.Error())
 					return
 				}
 			}

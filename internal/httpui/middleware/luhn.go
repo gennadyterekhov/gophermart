@@ -17,7 +17,7 @@ func Luhn(next http.Handler) http.Handler {
 		var reqBody []byte
 		reqBody, err := io.ReadAll(req.Body)
 		if err != nil {
-			logger.ZapSugarLogger.Errorln("could not read body", err.Error())
+			logger.CustomLogger.Errorln("could not read body", err.Error())
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -31,14 +31,14 @@ func Luhn(next http.Handler) http.Handler {
 		}
 
 		if err != nil {
-			logger.ZapSugarLogger.Error(err.Error())
+			logger.CustomLogger.Errorln(err.Error())
 			res.WriteHeader(http.StatusUnprocessableEntity)
 			return
 		}
 
 		err = luhn.Validate(number)
 		if err != nil {
-			logger.ZapSugarLogger.Error(err.Error())
+			logger.CustomLogger.Errorln(err.Error())
 			res.WriteHeader(http.StatusUnprocessableEntity)
 			return
 		}

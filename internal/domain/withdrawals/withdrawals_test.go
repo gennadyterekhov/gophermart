@@ -59,7 +59,7 @@ func TestCanCreateWithdrawals(t *testing.T) {
 
 	t.Run("", run(func(t *testing.T) {
 		userDto := helpers.RegisterForTest("a", "a")
-		var accrual int64 = 10
+		var accrual int64 = 101
 		_, err := repositories.AddOrder(
 			context.Background(),
 			"a",
@@ -72,7 +72,7 @@ func TestCanCreateWithdrawals(t *testing.T) {
 
 		ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
 		reqDto := &requests.Withdrawals{
-			Order: "a", // luhn is done in middleware// TODO check luhn in handler test
+			Order: "a",
 			Sum:   1,
 		}
 		_, err = Create(ctx, reqDto)
@@ -80,7 +80,7 @@ func TestCanCreateWithdrawals(t *testing.T) {
 
 		bal, _ := balance.GetBalance(context.Background(), userDto.ID)
 		assert.NoError(t, err)
-		assert.Equal(t, int64(9), bal)
+		assert.Equal(t, int64(1), bal)
 	}))
 }
 

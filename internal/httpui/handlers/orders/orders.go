@@ -15,7 +15,7 @@ import (
 func Handler() http.Handler {
 	return middleware.WithAuth(
 		http.HandlerFunc(orders),
-		middleware.ContentTypeJSON,
+		middleware.ResponseContentTypeJSON,
 	)
 }
 
@@ -28,9 +28,11 @@ func PostHandler() http.Handler {
 }
 
 func orders(res http.ResponseWriter, req *http.Request) {
+	logger.CustomLogger.Debugln(req.Method + req.RequestURI + " handler")
+
 	resDto, err := domain.GetAll(req.Context())
 	if err != nil {
-		logger.ZapSugarLogger.Errorln(err.Error())
+		logger.CustomLogger.Errorln(err.Error())
 
 		status := http.StatusInternalServerError
 
@@ -43,15 +45,16 @@ func orders(res http.ResponseWriter, req *http.Request) {
 
 	resBody, err := serializers.Orders(resDto)
 	if err != nil {
-		logger.ZapSugarLogger.Errorln(err.Error())
+		logger.CustomLogger.Errorln(err.Error())
 
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	logger.CustomLogger.Debugln("returning body", string(resBody))
 	_, err = res.Write(resBody)
 	if err != nil {
-		logger.ZapSugarLogger.Errorln(err.Error())
+		logger.CustomLogger.Errorln(err.Error())
 
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
@@ -60,9 +63,11 @@ func orders(res http.ResponseWriter, req *http.Request) {
 }
 
 func sendOrderToProcessing(res http.ResponseWriter, req *http.Request) {
+	logger.CustomLogger.Debugln(req.Method + req.RequestURI + " handler")
+
 	reqDto, err := getRequestDto(req)
 	if err != nil {
-		logger.ZapSugarLogger.Errorln("could not getRequestDto", err.Error())
+		logger.CustomLogger.Errorln("could not getRequestDto", err.Error())
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -74,7 +79,7 @@ func sendOrderToProcessing(res http.ResponseWriter, req *http.Request) {
 			res.WriteHeader(http.StatusOK)
 			return
 		}
-		logger.ZapSugarLogger.Errorln(err.Error())
+		logger.CustomLogger.Errorln(err.Error())
 
 		if err.Error() == domain.ErrorNumberAlreadyUploadedByAnotherUser {
 			http.Error(res, err.Error(), http.StatusConflict)

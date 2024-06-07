@@ -14,9 +14,6 @@ import (
 	"github.com/gennadyterekhov/gophermart/internal/repositories"
 )
 
-// 200 — номер заказа уже был загружен этим пользователем;
-// 202 — новый номер заказа принят в обработку;
-// 409 — номер заказа уже был загружен другим пользователем;
 const (
 	ErrorNoContent                          = "no content"
 	ErrorNumberAlreadyUploaded              = "ErrorNumberAlreadyUploaded"
@@ -62,7 +59,7 @@ func Create(ctx context.Context, reqDto *requests.Orders) error {
 		ctx,
 		reqDto.Number,
 		userID,
-		order.Registered,
+		order.New,
 		nil,
 		time.Time{},
 	)
@@ -71,6 +68,16 @@ func Create(ctx context.Context, reqDto *requests.Orders) error {
 	}
 
 	_, err = client.RegisterOrderInAccrual(reqDto.Number)
+	if err != nil {
+		return err
+	}
+
+	err = repositories.UpdateOrder(
+		ctx,
+		reqDto.Number,
+		order.Processing,
+		nil,
+	)
 	if err != nil {
 		return err
 	}

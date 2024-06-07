@@ -51,11 +51,12 @@ func Create(ctx context.Context, reqDto *requests.Withdrawals) (*responses.PostW
 		return nil, err
 	}
 
-	if reqDto.Sum > currentBalance {
+	sumAsInt := int64(reqDto.Sum * 100)
+	if sumAsInt > currentBalance {
 		return nil, fmt.Errorf(ErrorInsufficientFunds)
 	}
 
-	_, err = repositories.AddWithdrawal(ctx, userID, reqDto.Order, reqDto.Sum, time.Time{})
+	_, err = repositories.AddWithdrawal(ctx, userID, reqDto.Order, sumAsInt, time.Time{})
 	if err != nil {
 		return nil, err
 	}

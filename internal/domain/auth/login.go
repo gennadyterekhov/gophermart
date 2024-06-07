@@ -44,7 +44,7 @@ func checkPassword(plainPassword string, hashFromDB string) error {
 	// false.
 	match, err := argon2id.ComparePasswordAndHash(plainPassword, hashFromDB)
 	if err != nil {
-		logger.ZapSugarLogger.Errorln(err.Error())
+		logger.CustomLogger.Errorln(err.Error())
 		return err
 	}
 

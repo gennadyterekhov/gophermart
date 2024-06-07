@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gennadyterekhov/gophermart/internal/logger"
+
 	"github.com/gennadyterekhov/gophermart/internal/domain/auth"
 	"github.com/gennadyterekhov/gophermart/internal/httpui/serializers"
 
@@ -16,13 +18,16 @@ import (
 func Handler() http.Handler {
 	return middleware.WithoutAuth(
 		http.HandlerFunc(login),
-		middleware.ContentTypeJSON,
+		middleware.RequestContentTypeJSON,
 	)
 }
 
 func login(res http.ResponseWriter, req *http.Request) {
+	logger.CustomLogger.Debugln("/api/user/login handler")
+
 	reqDto, err := getRequestDto(req)
 	if err != nil {
+		logger.CustomLogger.Errorln(err.Error())
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -34,17 +39,24 @@ func login(res http.ResponseWriter, req *http.Request) {
 		if err.Error() == auth.ErrorWrongCredentials {
 			status = http.StatusUnauthorized
 		}
+		logger.CustomLogger.Errorln(err.Error())
+
 		http.Error(res, err.Error(), status)
 		return
 	}
+	res.Header().Set("Authorization", resDto.Token)
+
 	resBody, err := serializers.Login(resDto)
 	if err != nil {
+		logger.CustomLogger.Errorln(err.Error())
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	logger.CustomLogger.Debugln("returning body", string(resBody))
 	_, err = res.Write(resBody)
 	if err != nil {
+		logger.CustomLogger.Errorln(err.Error())
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
