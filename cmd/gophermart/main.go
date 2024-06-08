@@ -18,6 +18,7 @@ func main() {
 	fmt.Printf("Server started on %v\n", config.ServerConfig.Addr)
 	err := http.ListenAndServe(config.ServerConfig.Addr, handlers.GetRouter())
 	if err != nil {
+		logger.CustomLogger.Errorln(err.Error())
 		panic(err)
 	}
 }
