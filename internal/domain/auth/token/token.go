@@ -5,6 +5,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/gennadyterekhov/gophermart/internal/logger"
+
 	"github.com/gennadyterekhov/gophermart/internal/domain/auth/jwtclaims"
 	"github.com/gennadyterekhov/gophermart/internal/domain/models"
 	"github.com/golang-jwt/jwt/v5"
@@ -83,6 +85,7 @@ func getClaimsFromToken(token string) (*jwtclaims.Claims, error) {
 		},
 	)
 	if err != nil {
+		logger.CustomLogger.Errorln("could not parse token ", token)
 		return nil, errors.Wrap(err, "error when parsing token")
 	}
 

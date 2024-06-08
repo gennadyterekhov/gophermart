@@ -1,3 +1,8 @@
+cd cmd/gophermart
+go build -buildvcs=false -o gophermart
+cd ../../
+
+
 ./ci_tests/gophermarttest-darwin-arm64 \
   -test.v -test.run=^TestGophermart$ \
   -gophermart-binary-path=cmd/gophermart/gophermart \

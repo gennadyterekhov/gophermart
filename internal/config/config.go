@@ -3,6 +3,8 @@ package config
 import (
 	"flag"
 	"os"
+
+	"github.com/gennadyterekhov/gophermart/internal/logger"
 )
 
 type Config struct {
@@ -45,8 +47,9 @@ func getConfig() *Config {
 		DBDsn:      *DBDsnFlag,
 		AccrualURL: *accrualSystemAddressFlag,
 	}
-
+	logger.CustomLogger.Debugln("flags before envs", flags.Addr, flags.DBDsn, flags.AccrualURL)
 	overwriteWithEnv(&flags)
+	logger.CustomLogger.Debugln("flags after envs", flags.Addr, flags.DBDsn, flags.AccrualURL)
 
 	return &flags
 }

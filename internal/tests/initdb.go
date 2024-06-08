@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/gennadyterekhov/gophermart/internal/logger"
+
 	"github.com/gennadyterekhov/gophermart/internal/config"
 	"github.com/gennadyterekhov/gophermart/internal/storage"
 	"github.com/stretchr/testify/assert"
@@ -17,6 +19,7 @@ func InitDB() storage.QueryMaker {
 }
 
 func BeforeAll() {
+	logger.Init()
 	_ = InitDB()
 	storage.DBClient.Connection.UseTx = true
 }

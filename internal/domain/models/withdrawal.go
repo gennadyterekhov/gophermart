@@ -9,11 +9,3 @@ type Withdrawal struct {
 	TotalSum    int64
 	ProcessedAt time.Time
 }
-
-type WithdrawalFloats struct {
-	ID          int64
-	UserID      int64
-	OrderNumber string
-	TotalSum    float64
-	ProcessedAt time.Time
-}

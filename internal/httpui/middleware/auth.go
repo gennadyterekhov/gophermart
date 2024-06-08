@@ -18,7 +18,7 @@ func Auth(next http.Handler) http.Handler {
 		authHeader := req.Header.Get("Authorization")
 		id, _, err := token.GetIDAndLoginFromToken(authHeader)
 		if err != nil {
-			logger.ZapSugarLogger.Error(err.Error())
+			logger.CustomLogger.Errorln(err.Error())
 			res.WriteHeader(http.StatusUnauthorized)
 			return
 		}

@@ -108,7 +108,8 @@ func createDefaultDBClient() *DB {
 func CreateDBStorage(dsn string) *DB {
 	conn, err := sql.Open("pgx", dsn)
 	if err != nil {
-		logger.ZapSugarLogger.Panicln("could not connect to db using dsn: " + dsn + " " + err.Error())
+		logger.CustomLogger.Debugln("could not connect to db using dsn: " + dsn + " " + err.Error())
+		panic(err)
 	}
 
 	migration.RunMigrations(conn)

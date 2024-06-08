@@ -18,22 +18,24 @@ import (
 func Handler() http.Handler {
 	return middleware.WithAuth(
 		http.HandlerFunc(withdrawals),
-		middleware.ContentTypeJSON,
+		middleware.ResponseContentTypeJSON,
 	)
 }
 
 func PostHandler() http.Handler {
 	return middleware.WithAuth(
 		http.HandlerFunc(createWithdrawal),
-		middleware.ContentTypeJSON,
+		middleware.RequestContentTypeJSON,
 		middleware.Luhn,
 	)
 }
 
 func withdrawals(res http.ResponseWriter, req *http.Request) {
+	logger.CustomLogger.Debugln(req.Method + req.RequestURI + " handler")
+
 	resDto, err := domain.GetAll(req.Context())
 	if err != nil {
-		logger.ZapSugarLogger.Errorln(err.Error())
+		logger.CustomLogger.Errorln(err.Error())
 
 		status := http.StatusInternalServerError
 
@@ -46,15 +48,16 @@ func withdrawals(res http.ResponseWriter, req *http.Request) {
 
 	resBody, err := serializers.Withdrawals(resDto)
 	if err != nil {
-		logger.ZapSugarLogger.Errorln(err.Error())
+		logger.CustomLogger.Errorln(err.Error())
 
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	logger.CustomLogger.Debugln("returning body", string(resBody))
 	_, err = res.Write(resBody)
 	if err != nil {
-		logger.ZapSugarLogger.Errorln(err.Error())
+		logger.CustomLogger.Errorln(err.Error())
 
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
@@ -63,16 +66,18 @@ func withdrawals(res http.ResponseWriter, req *http.Request) {
 }
 
 func createWithdrawal(res http.ResponseWriter, req *http.Request) {
+	logger.CustomLogger.Debugln(req.Method + req.RequestURI + " handler")
+
 	reqDto, err := getRequestDto(req)
 	if err != nil {
-		logger.ZapSugarLogger.Errorln("could not getRequestDto", err.Error())
+		logger.CustomLogger.Errorln("could not getRequestDto", err.Error())
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	_, err = domain.Create(req.Context(), reqDto)
 	if err != nil {
-		logger.ZapSugarLogger.Errorln("could not create wdr", err.Error())
+		logger.CustomLogger.Errorln("could not create wdr", err.Error())
 
 		status := http.StatusInternalServerError
 
