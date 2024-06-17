@@ -5,8 +5,16 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"os"
 	"testing"
+
+	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
+
+	"github.com/stretchr/testify/suite"
+
+	"github.com/gennadyterekhov/gophermart/internal/config"
+
+	"github.com/gennadyterekhov/gophermart/internal/repositories"
+	"github.com/gennadyterekhov/gophermart/internal/storage"
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/auth/register"
 
@@ -17,17 +25,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMain(m *testing.M) {
-	tests.BeforeAll()
-	code := m.Run()
-	tests.AfterAll()
-	os.Exit(code)
+type testSuite struct {
+	suite.Suite
+	tests.SuiteUsingTransactions
+	tests.TestHTTPServer
 }
 
-func TestCanSendRegisterRequest(t *testing.T) {
-	run := tests.UsingTransactions()
-	tests.InitTestServer(GetRouter())
+func Test(t *testing.T) {
+	suiteInstance := &testSuite{}
+	suiteInstance.SetDB(storage.NewDB(helpers.TestDBDSN))
+	suite.Run(t, suiteInstance)
+}
 
+func (suite *testSuite) TestCanSendRegisterRequest() {
+	run := suite.UsingTransactions()
+	db := storage.NewDB(tests.TestDBDSN)
+	tests.InitTestServer(NewRouter(config.NewConfig(), db).Router)
 	cases := []struct {
 		name        string
 		contentType string
@@ -47,11 +60,9 @@ func TestCanSendRegisterRequest(t *testing.T) {
 	}
 
 	for _, tt := range cases {
-		t.Run(tt.name, run(func(t *testing.T) {
+		suite.T().Run(tt.name, run(func(t *testing.T) {
 			rawJSON := `{"login":"a", "password":"a"}`
-			responseStatusCode, bodyAsBytes := tests.SendPostAndReturnBody(
-				t,
-				tests.TestServer,
+			responseStatusCode, bodyAsBytes := suite.SendPostAndReturnBody(
 				"/api/user/register",
 				tt.contentType,
 				"",
@@ -70,22 +81,22 @@ func TestCanSendRegisterRequest(t *testing.T) {
 	}
 }
 
-func Test409IfSameLogin(t *testing.T) {
-	run := tests.UsingTransactions()
-	tests.InitTestServer(GetRouter())
-
-	t.Run("", run(func(t *testing.T) {
+func (suite *testSuite) Test409IfSameLogin() {
+	run := suite.UsingTransactions()
+	db := storage.NewDB(tests.TestDBDSN)
+	tests.InitTestServer(NewRouter(config.NewConfig(), db).Router)
+	repo := repositories.NewRepository(db)
+	service := register.NewService(repo)
+	suite.T().Run("", run(func(t *testing.T) {
 		reqDto := &requests.Register{
 			Login:    "a",
 			Password: "a",
 		}
-		_, err := register.Register(context.Background(), reqDto)
+		_, err := service.Register(context.Background(), reqDto)
 		assert.NoError(t, err)
 
 		rawJSON := `{"login":"a", "password":"b"}`
-		responseStatusCode := tests.SendPost(
-			t,
-			tests.TestServer,
+		responseStatusCode := suite.SendPost(
 			"/api/user/register",
 			"application/json",
 			"",

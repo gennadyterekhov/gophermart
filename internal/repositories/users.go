@@ -4,12 +4,11 @@ import (
 	"context"
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/models"
-	"github.com/gennadyterekhov/gophermart/internal/storage"
 )
 
-func GetUserByID(ctx context.Context, id int64) (*models.User, error) {
+func (repo *Repository) GetUserByID(ctx context.Context, id int64) (*models.User, error) {
 	const query = `SELECT id, login, password from users WHERE  id = $1`
-	row := storage.DBClient.Connection.QueryRowContext(ctx, query, id)
+	row := repo.DB.Connection.QueryRowContext(ctx, query, id)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
@@ -23,9 +22,9 @@ func GetUserByID(ctx context.Context, id int64) (*models.User, error) {
 	return &user, nil
 }
 
-func GetUserByLogin(ctx context.Context, login string) (*models.User, error) {
+func (repo *Repository) GetUserByLogin(ctx context.Context, login string) (*models.User, error) {
 	const query = `SELECT id, login, password from users WHERE  login = $1`
-	row := storage.DBClient.Connection.QueryRowContext(ctx, query, login)
+	row := repo.DB.Connection.QueryRowContext(ctx, query, login)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
@@ -39,10 +38,10 @@ func GetUserByLogin(ctx context.Context, login string) (*models.User, error) {
 	return &user, nil
 }
 
-func AddUser(ctx context.Context, login string, password string) (*models.User, error) {
+func (repo *Repository) AddUser(ctx context.Context, login string, password string) (*models.User, error) {
 	const query = `INSERT INTO users ( login, password) VALUES ( $1, $2) RETURNING id;`
 
-	row := storage.DBClient.Connection.QueryRowContext(ctx, query, login, password)
+	row := repo.DB.Connection.QueryRowContext(ctx, query, login, password)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}

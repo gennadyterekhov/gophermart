@@ -14,8 +14,18 @@ import (
 
 const ErrorWrongCredentials = "unknown credentials"
 
-func Login(ctx context.Context, reqDto *requests.Login) (*responses.Login, error) {
-	user, err := repositories.GetUserByLogin(ctx, reqDto.Login)
+type Service struct {
+	Repository repositories.Repository
+}
+
+func NewService(repo repositories.Repository) Service {
+	return Service{
+		Repository: repo,
+	}
+}
+
+func (service *Service) Login(ctx context.Context, reqDto *requests.Login) (*responses.Login, error) {
+	user, err := service.Repository.GetUserByLogin(ctx, reqDto.Login)
 	if err != nil {
 		return nil, fmt.Errorf(ErrorWrongCredentials)
 	}

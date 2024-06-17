@@ -12,25 +12,35 @@ import (
 	"github.com/gennadyterekhov/gophermart/internal/logger"
 )
 
-func Handler() http.Handler {
+type Controller struct {
+	Service domain.Service
+}
+
+func NewController(service domain.Service) Controller {
+	return Controller{
+		Service: service,
+	}
+}
+
+func Handler(controller *Controller) http.Handler {
 	return middleware.WithAuth(
-		http.HandlerFunc(orders),
+		http.HandlerFunc(controller.orders),
 		middleware.ResponseContentTypeJSON,
 	)
 }
 
-func PostHandler() http.Handler {
+func PostHandler(controller *Controller) http.Handler {
 	return middleware.WithAuth(
-		http.HandlerFunc(sendOrderToProcessing),
+		http.HandlerFunc(controller.sendOrderToProcessing),
 		middleware.ContentTypeTextPlain,
 		middleware.Luhn,
 	)
 }
 
-func orders(res http.ResponseWriter, req *http.Request) {
+func (controller *Controller) orders(res http.ResponseWriter, req *http.Request) {
 	logger.CustomLogger.Debugln(req.Method + req.RequestURI + " handler")
 
-	resDto, err := domain.GetAll(req.Context())
+	resDto, err := controller.Service.GetAll(req.Context())
 	if err != nil {
 		logger.CustomLogger.Errorln(err.Error())
 
@@ -62,7 +72,7 @@ func orders(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusOK)
 }
 
-func sendOrderToProcessing(res http.ResponseWriter, req *http.Request) {
+func (controller *Controller) sendOrderToProcessing(res http.ResponseWriter, req *http.Request) {
 	logger.CustomLogger.Debugln(req.Method + req.RequestURI + " handler")
 
 	reqDto, err := getRequestDto(req)
@@ -72,7 +82,7 @@ func sendOrderToProcessing(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	err = domain.Create(req.Context(), reqDto)
+	err = controller.Service.Create(req.Context(), reqDto)
 	if err != nil {
 
 		if err.Error() == domain.ErrorNumberAlreadyUploaded {

@@ -7,24 +7,32 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type customLogger struct{}
+type CustomLoggerType struct{}
 
-var CustomLogger *customLogger
+// deprecated
+var CustomLogger *CustomLoggerType
+
+func NewLogger() *CustomLoggerType {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+
+	return &CustomLoggerType{}
+}
 
 func Init() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
 }
 
-func (cl *customLogger) Debugln(msg ...interface{}) {
+func (cl *CustomLoggerType) Debugln(msg ...interface{}) {
 	log.Debug().Msg(makeMessage(msg))
 }
 
-func (cl *customLogger) Infoln(msg ...string) {
+func (cl *CustomLoggerType) Infoln(msg ...string) {
 	log.Info().Msg(makeMessage(msg))
 }
 
-func (cl *customLogger) Errorln(msg ...string) {
+func (cl *CustomLoggerType) Errorln(msg ...string) {
 	log.Error().Msg(makeMessage(msg))
 }
 

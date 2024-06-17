@@ -10,16 +10,26 @@ import (
 	"github.com/gennadyterekhov/gophermart/internal/httpui/serializers"
 )
 
-func Handler() http.Handler {
+type Controller struct {
+	Service balance.Service
+}
+
+func NewController(service balance.Service) Controller {
+	return Controller{
+		Service: service,
+	}
+}
+
+func Handler(controller *Controller) http.Handler {
 	return middleware.WithAuth(
-		http.HandlerFunc(getBalance),
+		http.HandlerFunc(controller.getBalance),
 		middleware.ResponseContentTypeJSON,
 	)
 }
 
-func getBalance(res http.ResponseWriter, req *http.Request) {
+func (controller *Controller) getBalance(res http.ResponseWriter, req *http.Request) {
 	logger.CustomLogger.Debugln(req.Method + req.RequestURI + " handler")
-	resDto, err := balance.GetBalanceResponse(req.Context())
+	resDto, err := controller.Service.GetBalanceResponse(req.Context())
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return

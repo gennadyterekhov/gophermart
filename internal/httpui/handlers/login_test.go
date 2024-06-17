@@ -6,6 +6,11 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/gennadyterekhov/gophermart/internal/repositories"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/gennadyterekhov/gophermart/internal/storage"
+
 	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
@@ -13,17 +18,32 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCanSendLoginRequest(t *testing.T) {
-	run := tests.UsingTransactions()
-	tests.InitTestServer(GetRouter())
+type loginTestSuite struct {
+	suite.Suite
+	tests.SuiteUsingTransactions
+	tests.TestHTTPServer
+	Repository repositories.Repository
+}
 
-	t.Run("", run(func(t *testing.T) {
+func TestLogin(t *testing.T) {
+	db := storage.NewDB(tests.TestDBDSN)
+
+	suiteInstance := &loginTestSuite{
+		Repository: repositories.NewRepository(db),
+	}
+	suiteInstance.SetDB(db)
+
+	suite.Run(t, suiteInstance)
+}
+
+func (suite *loginTestSuite) TestCanSendLoginRequest() {
+	run := suite.UsingTransactions()
+
+	suite.T().Run("", run(func(t *testing.T) {
 		helpers.RegisterForTest("a", "a")
 
 		rawJSON := `{"login":"a", "password":"a"}`
-		responseStatusCode, bodyAsBytes := tests.SendPostAndReturnBody(
-			t,
-			tests.TestServer,
+		responseStatusCode, bodyAsBytes := suite.SendPostAndReturnBody(
 			"/api/user/login",
 			"application/json",
 			"",
@@ -39,17 +59,13 @@ func TestCanSendLoginRequest(t *testing.T) {
 	}))
 }
 
-func TestCannotLoginWithWrongFieldName(t *testing.T) {
-	run := tests.UsingTransactions()
-	tests.InitTestServer(GetRouter())
-
-	t.Run("", run(func(t *testing.T) {
+func (suite *loginTestSuite) TestCannotLoginWithWrongFieldName() {
+	run := suite.UsingTransactions()
+	suite.T().Run("", run(func(t *testing.T) {
 		helpers.RegisterForTest("a", "a")
 
 		rawJSON := `{"logi":"a", "password":"a"}`
-		responseStatusCode := tests.SendPost(
-			t,
-			tests.TestServer,
+		responseStatusCode := suite.SendPost(
 			"/api/user/login",
 			"application/json",
 			"",
@@ -60,17 +76,14 @@ func TestCannotLoginWithWrongFieldName(t *testing.T) {
 	}))
 }
 
-func TestCannotLoginWithWrongContentType(t *testing.T) {
-	run := tests.UsingTransactions()
-	tests.InitTestServer(GetRouter())
+func (suite *loginTestSuite) TestCannotLoginWithWrongContentType() {
+	run := suite.UsingTransactions()
 
-	t.Run("", run(func(t *testing.T) {
+	suite.T().Run("", run(func(t *testing.T) {
 		helpers.RegisterForTest("a", "a")
 
 		rawJSON := `{"login":"a", "password":"a"}`
-		responseStatusCode := tests.SendPost(
-			t,
-			tests.TestServer,
+		responseStatusCode := suite.SendPost(
 			"/api/user/login",
 			"application",
 			"",

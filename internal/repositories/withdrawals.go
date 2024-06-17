@@ -5,10 +5,9 @@ import (
 	"time"
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/models"
-	"github.com/gennadyterekhov/gophermart/internal/storage"
 )
 
-func GetAllWithdrawalsForUser(ctx context.Context, userID int64) ([]models.Withdrawal, error) {
+func (repo *Repository) GetAllWithdrawalsForUser(ctx context.Context, userID int64) ([]models.Withdrawal, error) {
 	const query = `SELECT 
     			       id, 
     			       user_id, 
@@ -18,7 +17,7 @@ func GetAllWithdrawalsForUser(ctx context.Context, userID int64) ([]models.Withd
 				   FROM withdrawals 
 				   WHERE user_id = $1
 				   ORDER BY processed_at`
-	rows, err := storage.DBClient.Connection.QueryContext(ctx, query, userID)
+	rows, err := repo.DB.Connection.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +43,7 @@ func GetAllWithdrawalsForUser(ctx context.Context, userID int64) ([]models.Withd
 	return wdrs, nil
 }
 
-func AddWithdrawal(
+func (repo *Repository) AddWithdrawal(
 	ctx context.Context,
 	userID int64,
 	orderNumber string,
@@ -54,7 +53,7 @@ func AddWithdrawal(
 	const query = `INSERT INTO withdrawals (user_id, order_number, total_sum, processed_at)
 			values ($1, $2, $3, $4) RETURNING id;`
 
-	row := storage.DBClient.Connection.QueryRowContext(ctx, query, userID, orderNumber, totalSum, processedAt)
+	row := repo.DB.Connection.QueryRowContext(ctx, query, userID, orderNumber, totalSum, processedAt)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}

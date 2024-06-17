@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/go-resty/resty/v2"
+	"github.com/gennadyterekhov/gophermart/internal/repositories"
 
-	"github.com/gennadyterekhov/gophermart/internal/config"
+	"github.com/go-resty/resty/v2"
 )
 
 type AccrualClientResponse struct {
@@ -28,16 +28,28 @@ type TooManyRequestsResponse struct {
 	RequestsPerMinute int64
 }
 
+type AccrualClient struct {
+	AccrualURL string
+	Repository repositories.Repository
+}
+
+func NewClient(url string, repo repositories.Repository) AccrualClient {
+	return AccrualClient{
+		AccrualURL: url,
+		Repository: repo,
+	}
+}
+
 const (
 	ErrorNoContent       = "order is not registered"
 	ErrorInternal        = "internal server error"
 	ErrorUnknownResponse = "unknown response"
 )
 
-func GetStatus(number string) (*AccrualClientResponse, error) {
+func (ac *AccrualClient) GetStatus(number string) (*AccrualClientResponse, error) {
 	var err error
 	path := fmt.Sprintf("/api/orders/%v", number)
-	url := config.ServerConfig.AccrualURL + path
+	url := ac.AccrualURL + path
 	var client *resty.Client = resty.New()
 	response, err := client.R().Get(url)
 	if err != nil {
@@ -73,7 +85,7 @@ func GetStatus(number string) (*AccrualClientResponse, error) {
 	return responseDto, fmt.Errorf(ErrorUnknownResponse)
 }
 
-func RegisterOrderInAccrual(number string) (int, error) {
+func (ac *AccrualClient) RegisterOrderInAccrual(number string) (int, error) {
 	bodyBytes := []byte(`
 			{
 				"order": "` + number + `",
@@ -86,7 +98,7 @@ func RegisterOrderInAccrual(number string) (int, error) {
 			}
 		`)
 	var client *resty.Client = resty.New()
-	url := config.ServerConfig.AccrualURL + "/api/orders"
+	url := ac.AccrualURL + "/api/orders"
 	req := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(bodyBytes)
