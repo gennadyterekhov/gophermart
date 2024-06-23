@@ -3,18 +3,18 @@ package storage
 import (
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 type dbTest struct {
 	suite.Suite
 }
 
+const TestDBDSN = "host=localhost user=gophermart_user password=gophermart_pass dbname=gophermart_db_test sslmode=disable"
+
 func initDB() *DB {
-	const TestDBDSN = "host=localhost user=gophermart_user password=gophermart_pass dbname=gophermart_db_test sslmode=disable"
 	return NewDB(TestDBDSN)
 }
 

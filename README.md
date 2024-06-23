@@ -26,6 +26,15 @@ or
       psql -U gophermart_user -d gophermart_db_test
 
 ## tests
+run 1 suite:
+go test -run=TestOrders$ ./...
+
+run 1 test method in suite
+go test -run=TestOrders/Test200IfAlreadyUploaded ./...
+
+run tests and save stdout and stderr to file
+go test ./... > .temp/test.log 2>&1
+
 
 ### coverage
 to create coverage file  

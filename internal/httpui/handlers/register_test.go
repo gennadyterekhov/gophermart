@@ -2,45 +2,32 @@ package handlers
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"testing"
 
-	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
+	"github.com/gennadyterekhov/gophermart/internal/tests/suites/with_server"
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/gennadyterekhov/gophermart/internal/config"
-
-	"github.com/gennadyterekhov/gophermart/internal/repositories"
-	"github.com/gennadyterekhov/gophermart/internal/storage"
-
-	"github.com/gennadyterekhov/gophermart/internal/domain/auth/register"
-
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
 
-	"github.com/gennadyterekhov/gophermart/internal/domain/requests"
-	"github.com/gennadyterekhov/gophermart/internal/tests"
 	"github.com/stretchr/testify/assert"
 )
 
 type testSuite struct {
-	suite.Suite
-	tests.SuiteUsingTransactions
-	tests.TestHTTPServer
+	with_server.BaseSuiteWithServer
 }
 
 func Test(t *testing.T) {
 	suiteInstance := &testSuite{}
-	suiteInstance.SetDB(storage.NewDB(helpers.TestDBDSN))
+	with_server.InitBaseSuiteWithServer(suiteInstance)
 	suite.Run(t, suiteInstance)
 }
 
 func (suite *testSuite) TestCanSendRegisterRequest() {
 	run := suite.UsingTransactions()
-	db := storage.NewDB(tests.TestDBDSN)
-	tests.InitTestServer(NewRouter(config.NewConfig(), db).Router)
+
 	cases := []struct {
 		name        string
 		contentType string
@@ -83,17 +70,9 @@ func (suite *testSuite) TestCanSendRegisterRequest() {
 
 func (suite *testSuite) Test409IfSameLogin() {
 	run := suite.UsingTransactions()
-	db := storage.NewDB(tests.TestDBDSN)
-	tests.InitTestServer(NewRouter(config.NewConfig(), db).Router)
-	repo := repositories.NewRepository(db)
-	service := register.NewService(repo)
+
 	suite.T().Run("", run(func(t *testing.T) {
-		reqDto := &requests.Register{
-			Login:    "a",
-			Password: "a",
-		}
-		_, err := service.Register(context.Background(), reqDto)
-		assert.NoError(t, err)
+		suite.RegisterForTest("a", "a")
 
 		rawJSON := `{"login":"a", "password":"b"}`
 		responseStatusCode := suite.SendPost(

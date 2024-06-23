@@ -5,56 +5,50 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
+	"github.com/gennadyterekhov/gophermart/internal/tests/suites/base"
+
 	"github.com/stretchr/testify/suite"
 
-	"github.com/gennadyterekhov/gophermart/internal/repositories"
-	"github.com/gennadyterekhov/gophermart/internal/storage"
-	"github.com/gennadyterekhov/gophermart/internal/tests"
 	"github.com/stretchr/testify/assert"
 )
 
 type withdrawalsRepositoryTest struct {
-	suite.Suite
-	tests.SuiteUsingTransactions
-	Repository repositories.Repository
+	base.BaseSuite
 }
 
-func (suite *withdrawalsRepositoryTest) SetupSuite() {
-	db := storage.NewDB(helpers.TestDBDSN)
-	suite.SetDB(db)
-	suite.Repository = repositories.NewRepository(db)
+func newSuite() *withdrawalsRepositoryTest {
+	suiteInstance := &withdrawalsRepositoryTest{}
+	base.InitBaseSuite(suiteInstance)
+
+	return suiteInstance
 }
 
 func (suite *withdrawalsRepositoryTest) TestCanInsertAndGetAllWithdrawals() {
-	run := suite.UsingTransactions()
-	repo := repositories.NewRepository(storage.NewDB(tests.TestDBDSN))
-
-	suite.T().Run("", run(func(t *testing.T) {
+	suite.T().Run("", func(t *testing.T) {
 		var err error
-		user, err := repo.AddUser(context.Background(), "a", "a")
+		user, err := suite.Repository.AddUser(context.Background(), "a", "a")
 		assert.NoError(t, err)
 
-		user2, err := repo.AddUser(context.Background(), "b", "a")
+		user2, err := suite.Repository.AddUser(context.Background(), "b", "a")
 		assert.NoError(t, err)
 
-		_, err = repo.AddWithdrawal(context.Background(), user.ID, "a", 0, time.Time{})
+		_, err = suite.Repository.AddWithdrawal(context.Background(), user.ID, "a", 0, time.Time{})
 		assert.NoError(t, err)
-		_, err = repo.AddWithdrawal(context.Background(), user.ID, "b", 0, time.Time{})
+		_, err = suite.Repository.AddWithdrawal(context.Background(), user.ID, "b", 0, time.Time{})
 		assert.NoError(t, err)
-		_, err = repo.AddWithdrawal(context.Background(), user2.ID, "b", 0, time.Time{})
+		_, err = suite.Repository.AddWithdrawal(context.Background(), user2.ID, "b", 0, time.Time{})
 		assert.NoError(t, err)
 
-		wdrs, _ := repo.GetAllWithdrawalsForUser(context.Background(), user.ID)
+		wdrs, _ := suite.Repository.GetAllWithdrawalsForUser(context.Background(), user.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, 2, len(wdrs))
 
-		wdrs2, _ := repo.GetAllWithdrawalsForUser(context.Background(), user2.ID)
+		wdrs2, _ := suite.Repository.GetAllWithdrawalsForUser(context.Background(), user2.ID)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(wdrs2))
-	}))
+	})
 }
 
 func TestWithdrawals(t *testing.T) {
-	suite.Run(t, new(withdrawalsRepositoryTest))
+	suite.Run(t, newSuite())
 }

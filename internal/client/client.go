@@ -30,10 +30,10 @@ type TooManyRequestsResponse struct {
 
 type AccrualClient struct {
 	AccrualURL string
-	Repository repositories.Repository
+	Repository repositories.RepositoryInterface
 }
 
-func NewClient(url string, repo repositories.Repository) AccrualClient {
+func NewClient(url string, repo repositories.RepositoryInterface) AccrualClient {
 	return AccrualClient{
 		AccrualURL: url,
 		Repository: repo,

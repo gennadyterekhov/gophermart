@@ -5,46 +5,38 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gennadyterekhov/gophermart/internal/tests"
-
-	"github.com/stretchr/testify/suite"
+	"github.com/gennadyterekhov/gophermart/internal/tests/suites/base"
 
 	"github.com/gennadyterekhov/gophermart/internal/client"
-
-	"github.com/gennadyterekhov/gophermart/internal/storage"
-
 	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
-
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
 	"github.com/gennadyterekhov/gophermart/internal/httpui/middleware"
-	"github.com/gennadyterekhov/gophermart/internal/repositories"
-	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 type testSuite struct {
-	suite.Suite
-	tests.SuiteUsingTransactions
+	base.BaseSuite
 	Service Service
 }
 
-func (suite *testSuite) SetupSuite() {
-	db := storage.NewDB(helpers.TestDBDSN)
-	repo := repositories.NewRepository(db)
-	suite.SetDB(db)
-	//	suiteInstance.SetDB(storage.NewDB(helpers.TestDBDSN))
-	suite.Service = NewService(repo, client.NewClient("", repo))
+func newSuite() *testSuite {
+	suiteInstance := &testSuite{}
+	base.InitBaseSuite(suiteInstance)
+	suiteInstance.Service = NewService(suiteInstance.GetRepository(), client.NewClient("", suiteInstance.GetRepository()))
+
+	return suiteInstance
 }
 
-func Test(t *testing.T) {
-	suite.Run(t, new(testSuite))
+func TestDomainOrders(t *testing.T) {
+	suite.Run(t, newSuite())
 }
 
 func (suite *testSuite) TestCanGetOrders() {
 	run := suite.UsingTransactions()
 
 	suite.T().Run("", run(func(t *testing.T) {
-		userDto := helpers.RegisterForTest("a", "a")
+		userDto := suite.RegisterForTest("a", "a")
 		withdrawalNewest, withdrawalMedium, withdrawalOldest := suite.createDifferentOrders(userDto)
 
 		ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
@@ -62,17 +54,18 @@ func (suite *testSuite) TestNoContentReturnsError() {
 	run := suite.UsingTransactions()
 
 	suite.T().Run("", run(func(t *testing.T) {
-		userDto := helpers.RegisterForTest("a", "a")
+		userDto := suite.RegisterForTest("a", "a")
 		ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
 		_, err := suite.Service.GetAll(ctx)
-		assert.Equal(t, err.Error(), ErrorNoContent)
+		assert.Error(t, err)
+		assert.Equal(suite.T(), err.Error(), ErrorNoContent)
 	}))
 }
 
-func (suite *testSuite) TestCanCreateOrder(t *testing.T) {
+func (suite *testSuite) TestCanCreateOrder() {
 }
 
-func (suite *testSuite) TestCanOrderStatusIsAutomaticallyUpdated(t *testing.T) {
+func (suite *testSuite) TestCanOrderStatusIsAutomaticallyUpdated() {
 }
 
 func (suite *testSuite) createDifferentOrders(

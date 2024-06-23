@@ -5,37 +5,27 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gennadyterekhov/gophermart/internal/tests"
-
-	"github.com/gennadyterekhov/gophermart/internal/storage"
-
-	"github.com/stretchr/testify/suite"
+	"github.com/gennadyterekhov/gophermart/internal/tests/suites/base"
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
-
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
 	"github.com/gennadyterekhov/gophermart/internal/repositories"
-	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 )
 
 type orderRepositoryTest struct {
-	suite.Suite
-	tests.SuiteUsingTransactions
-	Repository repositories.Repository
+	base.BaseSuite
 }
 
 func (suite *orderRepositoryTest) SetupSuite() {
-	db := storage.NewDB(helpers.TestDBDSN)
-	suite.SetDB(db)
-	suite.Repository = repositories.NewRepository(db)
+	base.InitBaseSuite(suite)
 }
 
-func (suite *orderRepositoryTest) TestCanGetOrders() {
-	run := suite.UsingTransactions()
-	suite.T().Run("", run(func(t *testing.T) {
-		regDto := helpers.RegisterForTest("a", "a")
-		orderNewest, orderMedium, orderOldest := createDifferentOrders(t, &suite.Repository, regDto)
+func (suite *orderRepositoryTest) TestCanGetOrdersFromRepo() {
+	suite.T().Run("", func(t *testing.T) {
+		regDto := suite.RegisterForTest("a", "a")
+		orderNewest, orderMedium, orderOldest := createDifferentOrders(t, suite.Repository, regDto)
 
 		orders, err := suite.Repository.GetAllOrdersForUser(context.Background(), regDto.ID)
 		assert.NoError(t, err)
@@ -43,26 +33,24 @@ func (suite *orderRepositoryTest) TestCanGetOrders() {
 		assert.Equal(t, orderOldest.Number, orders[0].Number)
 		assert.Equal(t, orderMedium.Number, orders[1].Number)
 		assert.Equal(t, orderNewest.Number, orders[2].Number)
-	}))
+	})
 }
 
 func (suite *orderRepositoryTest) TestCanInsertOrder() {
-	run := suite.UsingTransactions()
-
-	suite.T().Run("", run(func(t *testing.T) {
-		regDto := helpers.RegisterForTest("a", "a")
+	suite.T().Run("", func(t *testing.T) {
+		regDto := suite.RegisterForTest("a", "a")
 		_, err := suite.Repository.AddOrder(context.Background(), "1", regDto.ID, "", nil, time.Time{})
 		assert.NoError(t, err)
-	}))
+	})
 }
 
-func Test(t *testing.T) {
+func TestOrdersRepo(t *testing.T) {
 	suite.Run(t, new(orderRepositoryTest))
 }
 
 func createDifferentOrders(
 	t *testing.T,
-	repo *repositories.Repository,
+	repo *repositories.RepositoryMock,
 	userDto *responses.Register,
 ) (*order.Order, *order.Order, *order.Order) {
 	orderNewest, err := repo.AddOrder(

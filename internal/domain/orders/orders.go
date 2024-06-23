@@ -21,11 +21,11 @@ const (
 )
 
 type Service struct {
-	Repository    repositories.Repository
+	Repository    repositories.RepositoryInterface
 	AccrualClient client.AccrualClient
 }
 
-func NewService(repo repositories.Repository, cl client.AccrualClient) Service {
+func NewService(repo repositories.RepositoryInterface, cl client.AccrualClient) Service {
 	return Service{
 		Repository:    repo,
 		AccrualClient: cl,

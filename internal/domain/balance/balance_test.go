@@ -5,32 +5,24 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gennadyterekhov/gophermart/internal/tests"
+	"github.com/gennadyterekhov/gophermart/internal/tests/suites/base"
 
 	"github.com/stretchr/testify/suite"
-
-	"github.com/gennadyterekhov/gophermart/internal/storage"
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/models"
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
 	"github.com/gennadyterekhov/gophermart/internal/httpui/middleware"
-	"github.com/gennadyterekhov/gophermart/internal/repositories"
-	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
 	"github.com/stretchr/testify/assert"
 )
 
 type testSuite struct {
-	suite.Suite
-	tests.SuiteUsingTransactions
+	base.BaseSuite
 	Service Service
 }
 
 func (suite *testSuite) SetupSuite() {
-	db := storage.NewDB(helpers.TestDBDSN)
-	repo := repositories.NewRepository(db)
-	suite.SetDB(db)
-	//	suiteInstance.SetDB(storage.NewDB(helpers.TestDBDSN))
-	suite.Service = NewService(repo)
+	base.InitBaseSuite(suite)
+	suite.Service = NewService(suite.GetRepository())
 }
 
 func Test(t *testing.T) {
@@ -41,7 +33,7 @@ func (suite *testSuite) TestCanGetBalance() {
 	run := suite.UsingTransactions()
 
 	suite.T().Run("", run(func(t *testing.T) {
-		userDto := helpers.RegisterForTest("a", "a")
+		userDto := suite.RegisterForTest("a", "a")
 		suite.createDifferentWithdrawals(userDto)
 		var startBalance int64 = 10
 		_, err := suite.Service.Repository.AddOrder(context.Background(), "", userDto.ID, "", &startBalance, time.Time{})

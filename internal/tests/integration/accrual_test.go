@@ -10,23 +10,23 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gennadyterekhov/gophermart/internal/storage"
+	"github.com/gennadyterekhov/gophermart/internal/tests/suites/with_server"
+
+	"github.com/gennadyterekhov/gophermart/internal/httpui/handlers/controllers"
+
+	"github.com/gennadyterekhov/gophermart/internal/httpui/handlers/router"
 
 	"github.com/gennadyterekhov/gophermart/internal/config"
 	"github.com/gennadyterekhov/gophermart/internal/fork"
-	"github.com/gennadyterekhov/gophermart/internal/httpui/handlers"
 	"github.com/gennadyterekhov/gophermart/internal/logger"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/gennadyterekhov/gophermart/internal/tests"
-	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
 	"github.com/stretchr/testify/require"
 )
 
 type testSuite struct {
-	suite.Suite
-	tests.SuiteUsingTransactions
-	tests.TestHTTPServer
+	with_server.BaseSuiteWithServer
 	serverAddress string
 	serverPort    string
 	serverProcess *fork.BackgroundProcess
@@ -37,16 +37,15 @@ type testSuite struct {
 
 func (suite *testSuite) SetupSuite() {
 	conf := config.NewConfig()
-	db := storage.NewDB(helpers.TestDBDSN)
-	s := tests.NewTestHTTPServer(handlers.NewRouter(conf, db).Router)
+	with_server.InitBaseSuiteWithServer(suite)
+	controllersStruct := controllers.NewControllers(conf, suite.GetRepository())
+	s := tests.NewTestHTTPServer(router.NewRouter(controllersStruct).Router)
 	suite.Server = s.Server
 	suite.serverAddress = conf.AccrualURL
 	suite.serverPort = "8080"
 	suite.serverProcess = nil
 	suite.serverArgs = []string{""}
 	suite.envs = []string{""}
-
-	suite.SetDB(db)
 
 	ctx, cancelContext := context.WithTimeout(context.Background(), 30*time.Second)
 	suite.cancelContext = cancelContext
@@ -122,7 +121,7 @@ func (suite *testSuite) Test202IfUploadedFirstTime() {
 
 	suite.T().Run("", run(func(t *testing.T) {
 		var _ error
-		regDto := helpers.RegisterForTest("a", "a")
+		regDto := suite.RegisterForTest("a", "a")
 
 		responseStatusCode := suite.SendPost(
 			"/api/user/orders",

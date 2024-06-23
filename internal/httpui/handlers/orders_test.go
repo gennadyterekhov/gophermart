@@ -8,37 +8,29 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gennadyterekhov/gophermart/internal/tests/suites/with_server"
+
 	"github.com/stretchr/testify/suite"
-
-	"github.com/gennadyterekhov/gophermart/internal/config"
-
-	"github.com/gennadyterekhov/gophermart/internal/storage"
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
 
-	"github.com/gennadyterekhov/gophermart/internal/repositories"
-	"github.com/gennadyterekhov/gophermart/internal/tests"
-	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type ordersTestSuite struct {
-	suite.Suite
-	tests.SuiteUsingTransactions
-	tests.TestHTTPServer
-	Repository repositories.Repository
+	with_server.BaseSuiteWithServer
+}
+
+func newSuite() *ordersTestSuite {
+	suiteInstance := &ordersTestSuite{}
+	with_server.InitBaseSuiteWithServer(suiteInstance)
+
+	return suiteInstance
 }
 
 func TestOrders(t *testing.T) {
-	db := storage.NewDB(tests.TestDBDSN)
-
-	suiteInstance := &ordersTestSuite{
-		Repository: repositories.NewRepository(db),
-	}
-	suiteInstance.SetDB(db)
-
-	suite.Run(t, suiteInstance)
+	suite.Run(t, newSuite())
 }
 
 func (suite *ordersTestSuite) TestCanSendOrdersRequest() {
@@ -46,7 +38,7 @@ func (suite *ordersTestSuite) TestCanSendOrdersRequest() {
 
 	suite.T().Run("", run(func(t *testing.T) {
 		var err error
-		regDto := helpers.RegisterForTest("a", "a")
+		regDto := suite.RegisterForTest("a", "a")
 		_, err = suite.Repository.AddOrder(
 			context.Background(),
 			"1",
@@ -84,10 +76,8 @@ func (suite *ordersTestSuite) TestCanSendOrdersRequest() {
 
 func (suite *ordersTestSuite) TestOrders204IfNoContent() {
 	run := suite.UsingTransactions()
-	db := storage.NewDB(tests.TestDBDSN)
-	tests.InitTestServer(NewRouter(config.NewConfig(), db).Router)
 	suite.T().Run("", run(func(t *testing.T) {
-		regDto := helpers.RegisterForTest("a", "a")
+		regDto := suite.RegisterForTest("a", "a")
 
 		responseStatusCode, _ := suite.SendGet(
 			"/api/user/orders",
@@ -102,7 +92,7 @@ func (suite *ordersTestSuite) TestOrders401IfNoToken() {
 	run := suite.UsingTransactions()
 
 	suite.T().Run("", run(func(t *testing.T) {
-		helpers.RegisterForTest("a", "a")
+		suite.RegisterForTest("a", "a")
 
 		responseStatusCode, _ := suite.SendGet(
 			"/api/user/orders",
@@ -118,7 +108,7 @@ func (suite *ordersTestSuite) Test200IfAlreadyUploaded() {
 
 	suite.T().Run("", run(func(t *testing.T) {
 		var err error
-		regDto := helpers.RegisterForTest("a", "a")
+		regDto := suite.RegisterForTest("a", "a")
 		_, err = suite.Repository.AddOrder(
 			context.Background(),
 			"12345678903",
@@ -144,7 +134,7 @@ func (suite *ordersTestSuite) Test409IfAlreadyUploadedByAnotherUser() {
 
 	suite.T().Run("", run(func(t *testing.T) {
 		var err error
-		anotherUser := helpers.RegisterForTest("another", "a")
+		anotherUser := suite.RegisterForTest("another", "a")
 
 		_, err = suite.Repository.AddOrder(
 			context.Background(),
@@ -155,7 +145,7 @@ func (suite *ordersTestSuite) Test409IfAlreadyUploadedByAnotherUser() {
 		)
 		assert.NoError(t, err)
 
-		regDto := helpers.RegisterForTest("a", "a")
+		regDto := suite.RegisterForTest("a", "a")
 		responseStatusCode := suite.SendPost(
 			"/api/user/orders",
 			"text/plain",
@@ -172,7 +162,7 @@ func (suite *ordersTestSuite) Test422IfInvalidNumber() {
 
 	suite.T().Run("", run(func(t *testing.T) {
 		var _ error
-		regDto := helpers.RegisterForTest("a", "a")
+		regDto := suite.RegisterForTest("a", "a")
 
 		responseStatusCode := suite.SendPost(
 
