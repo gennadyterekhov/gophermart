@@ -8,6 +8,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/suite"
+
+	"github.com/gennadyterekhov/gophermart/internal/config"
+
+	"github.com/gennadyterekhov/gophermart/internal/storage"
+
 	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
 
 	"github.com/gennadyterekhov/gophermart/internal/repositories"
@@ -17,14 +23,31 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCanSendOrdersRequest(t *testing.T) {
-	run := tests.UsingTransactions()
-	tests.InitTestServer(GetRouter())
+type ordersTestSuite struct {
+	suite.Suite
+	tests.SuiteUsingTransactions
+	tests.TestHTTPServer
+	Repository repositories.Repository
+}
 
-	t.Run("", run(func(t *testing.T) {
+func TestOrders(t *testing.T) {
+	db := storage.NewDB(tests.TestDBDSN)
+
+	suiteInstance := &ordersTestSuite{
+		Repository: repositories.NewRepository(db),
+	}
+	suiteInstance.SetDB(db)
+
+	suite.Run(t, suiteInstance)
+}
+
+func (suite *ordersTestSuite) TestCanSendOrdersRequest() {
+	run := suite.UsingTransactions()
+
+	suite.T().Run("", run(func(t *testing.T) {
 		var err error
 		regDto := helpers.RegisterForTest("a", "a")
-		_, err = repositories.AddOrder(
+		_, err = suite.Repository.AddOrder(
 			context.Background(),
 			"1",
 			regDto.ID,
@@ -34,7 +57,7 @@ func TestCanSendOrdersRequest(t *testing.T) {
 		assert.NoError(t, err)
 
 		var tenDollarsOrThousandCents int64 = 1000
-		_, err = repositories.AddOrder(
+		_, err = suite.Repository.AddOrder(
 			context.Background(),
 			"2",
 			regDto.ID,
@@ -43,9 +66,7 @@ func TestCanSendOrdersRequest(t *testing.T) {
 		)
 		assert.NoError(t, err)
 
-		responseStatusCode, bodyAsBytes := tests.SendGet(
-			t,
-			tests.TestServer,
+		responseStatusCode, bodyAsBytes := suite.SendGet(
 			"/api/user/orders",
 			regDto.Token,
 		)
@@ -61,16 +82,14 @@ func TestCanSendOrdersRequest(t *testing.T) {
 	}))
 }
 
-func TestOrders204IfNoContent(t *testing.T) {
-	run := tests.UsingTransactions()
-	tests.InitTestServer(GetRouter())
-
-	t.Run("", run(func(t *testing.T) {
+func (suite *ordersTestSuite) TestOrders204IfNoContent() {
+	run := suite.UsingTransactions()
+	db := storage.NewDB(tests.TestDBDSN)
+	tests.InitTestServer(NewRouter(config.NewConfig(), db).Router)
+	suite.T().Run("", run(func(t *testing.T) {
 		regDto := helpers.RegisterForTest("a", "a")
 
-		responseStatusCode, _ := tests.SendGet(
-			t,
-			tests.TestServer,
+		responseStatusCode, _ := suite.SendGet(
 			"/api/user/orders",
 			regDto.Token,
 		)
@@ -79,16 +98,13 @@ func TestOrders204IfNoContent(t *testing.T) {
 	}))
 }
 
-func TestOrders401IfNoToken(t *testing.T) {
-	run := tests.UsingTransactions()
-	tests.InitTestServer(GetRouter())
+func (suite *ordersTestSuite) TestOrders401IfNoToken() {
+	run := suite.UsingTransactions()
 
-	t.Run("", run(func(t *testing.T) {
+	suite.T().Run("", run(func(t *testing.T) {
 		helpers.RegisterForTest("a", "a")
 
-		responseStatusCode, _ := tests.SendGet(
-			t,
-			tests.TestServer,
+		responseStatusCode, _ := suite.SendGet(
 			"/api/user/orders",
 			"",
 		)
@@ -97,14 +113,13 @@ func TestOrders401IfNoToken(t *testing.T) {
 	}))
 }
 
-func Test200IfAlreadyUploaded(t *testing.T) {
-	run := tests.UsingTransactions()
-	tests.InitTestServer(GetRouter())
+func (suite *ordersTestSuite) Test200IfAlreadyUploaded() {
+	run := suite.UsingTransactions()
 
-	t.Run("", run(func(t *testing.T) {
+	suite.T().Run("", run(func(t *testing.T) {
 		var err error
 		regDto := helpers.RegisterForTest("a", "a")
-		_, err = repositories.AddOrder(
+		_, err = suite.Repository.AddOrder(
 			context.Background(),
 			"12345678903",
 			regDto.ID,
@@ -113,9 +128,7 @@ func Test200IfAlreadyUploaded(t *testing.T) {
 		)
 		assert.NoError(t, err)
 
-		responseStatusCode := tests.SendPost(
-			t,
-			tests.TestServer,
+		responseStatusCode := suite.SendPost(
 			"/api/user/orders",
 			"text/plain",
 			regDto.Token,
@@ -126,15 +139,14 @@ func Test200IfAlreadyUploaded(t *testing.T) {
 	}))
 }
 
-func Test409IfAlreadyUploadedByAnotherUser(t *testing.T) {
-	run := tests.UsingTransactions()
-	tests.InitTestServer(GetRouter())
+func (suite *ordersTestSuite) Test409IfAlreadyUploadedByAnotherUser() {
+	run := suite.UsingTransactions()
 
-	t.Run("", run(func(t *testing.T) {
+	suite.T().Run("", run(func(t *testing.T) {
 		var err error
 		anotherUser := helpers.RegisterForTest("another", "a")
 
-		_, err = repositories.AddOrder(
+		_, err = suite.Repository.AddOrder(
 			context.Background(),
 			"12345678903",
 			anotherUser.ID,
@@ -144,9 +156,7 @@ func Test409IfAlreadyUploadedByAnotherUser(t *testing.T) {
 		assert.NoError(t, err)
 
 		regDto := helpers.RegisterForTest("a", "a")
-		responseStatusCode := tests.SendPost(
-			t,
-			tests.TestServer,
+		responseStatusCode := suite.SendPost(
 			"/api/user/orders",
 			"text/plain",
 			regDto.Token,
@@ -157,17 +167,15 @@ func Test409IfAlreadyUploadedByAnotherUser(t *testing.T) {
 	}))
 }
 
-func Test422IfInvalidNumber(t *testing.T) {
-	run := tests.UsingTransactions()
-	tests.InitTestServer(GetRouter())
+func (suite *ordersTestSuite) Test422IfInvalidNumber() {
+	run := suite.UsingTransactions()
 
-	t.Run("", run(func(t *testing.T) {
+	suite.T().Run("", run(func(t *testing.T) {
 		var _ error
 		regDto := helpers.RegisterForTest("a", "a")
 
-		responseStatusCode := tests.SendPost(
-			t,
-			tests.TestServer,
+		responseStatusCode := suite.SendPost(
+
 			"/api/user/orders",
 			"text/plain",
 			regDto.Token,

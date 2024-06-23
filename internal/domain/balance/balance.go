@@ -10,7 +10,17 @@ import (
 	"github.com/gennadyterekhov/gophermart/internal/repositories"
 )
 
-func GetBalanceResponse(ctx context.Context) (*responses.Balance, error) {
+type Service struct {
+	Repository repositories.Repository
+}
+
+func NewService(repo repositories.Repository) Service {
+	return Service{
+		Repository: repo,
+	}
+}
+
+func (service *Service) GetBalanceResponse(ctx context.Context) (*responses.Balance, error) {
 	userID, ok := ctx.Value(middleware.ContextUserIDKey).(int64)
 	if !ok {
 		return nil, fmt.Errorf("cannot get user_id from context")
@@ -18,11 +28,11 @@ func GetBalanceResponse(ctx context.Context) (*responses.Balance, error) {
 
 	resDto := &responses.Balance{}
 
-	balance, err := GetBalance(ctx, userID)
+	balance, err := service.GetBalance(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-	withdrawn, err := GetWithdrawn(ctx, userID)
+	withdrawn, err := service.GetWithdrawn(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -33,12 +43,12 @@ func GetBalanceResponse(ctx context.Context) (*responses.Balance, error) {
 	return resDto, nil
 }
 
-func GetBalance(ctx context.Context, userID int64) (int64, error) {
-	orders, err := repositories.GetAllOrdersForUser(ctx, userID)
+func (service *Service) GetBalance(ctx context.Context, userID int64) (int64, error) {
+	orders, err := service.Repository.GetAllOrdersForUser(ctx, userID)
 	if err != nil {
 		return 0, err
 	}
-	withdrawn, err := GetWithdrawn(ctx, userID)
+	withdrawn, err := service.GetWithdrawn(ctx, userID)
 	if err != nil {
 		return 0, err
 	}
@@ -54,8 +64,8 @@ func GetBalance(ctx context.Context, userID int64) (int64, error) {
 	return sum, nil
 }
 
-func GetWithdrawn(ctx context.Context, userID int64) (int64, error) {
-	wdrs, err := repositories.GetAllWithdrawalsForUser(ctx, userID)
+func (service *Service) GetWithdrawn(ctx context.Context, userID int64) (int64, error) {
+	wdrs, err := service.Repository.GetAllWithdrawalsForUser(ctx, userID)
 	if err != nil {
 		return 0, err
 	}

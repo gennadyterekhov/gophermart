@@ -22,13 +22,25 @@ const (
 	ErrorInsufficientFunds = "insufficient funds"
 )
 
-func GetAll(ctx context.Context) (*[]models.Withdrawal, error) {
+type Service struct {
+	Repository     repositories.Repository
+	BalanceService balance.Service
+}
+
+func NewService(repo repositories.Repository, balanceService balance.Service) Service {
+	return Service{
+		Repository:     repo,
+		BalanceService: balanceService,
+	}
+}
+
+func (service *Service) GetAll(ctx context.Context) (*[]models.Withdrawal, error) {
 	userID, ok := ctx.Value(middleware.ContextUserIDKey).(int64)
 	if !ok {
 		return nil, fmt.Errorf("cannot get user_id from context")
 	}
 
-	withdrawals, err := repositories.GetAllWithdrawalsForUser(ctx, userID)
+	withdrawals, err := service.Repository.GetAllWithdrawalsForUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -40,13 +52,13 @@ func GetAll(ctx context.Context) (*[]models.Withdrawal, error) {
 	return &withdrawals, nil
 }
 
-func Create(ctx context.Context, reqDto *requests.Withdrawals) (*responses.PostWithdrawals, error) {
+func (service *Service) Create(ctx context.Context, reqDto *requests.Withdrawals) (*responses.PostWithdrawals, error) {
 	userID, ok := ctx.Value(middleware.ContextUserIDKey).(int64)
 	if !ok {
 		return nil, fmt.Errorf("cannot get user_id from context")
 	}
 
-	currentBalance, err := balance.GetBalance(ctx, userID)
+	currentBalance, err := service.BalanceService.GetBalance(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +68,7 @@ func Create(ctx context.Context, reqDto *requests.Withdrawals) (*responses.PostW
 		return nil, fmt.Errorf(ErrorInsufficientFunds)
 	}
 
-	_, err = repositories.AddWithdrawal(ctx, userID, reqDto.Order, sumAsInt, time.Time{})
+	_, err = service.Repository.AddWithdrawal(ctx, userID, reqDto.Order, sumAsInt, time.Time{})
 	if err != nil {
 		return nil, err
 	}

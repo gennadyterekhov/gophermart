@@ -4,8 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-
-	"github.com/gennadyterekhov/gophermart/internal/config"
+	"sync"
 
 	"github.com/gennadyterekhov/gophermart/internal/storage/migration"
 
@@ -21,6 +20,18 @@ type QueryMaker interface {
 	Close() error
 	Commit() error
 	Rollback() error
+}
+
+var (
+	db   *DB
+	once sync.Once
+)
+
+func NewDB(dsn string) *DB {
+	once.Do(func() {
+		db = CreateDBStorage(dsn)
+	})
+	return db
 }
 
 func (ct *ConnectionOrTransaction) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
@@ -97,12 +108,6 @@ type ConnectionOrTransaction struct {
 
 type DB struct {
 	Connection *ConnectionOrTransaction
-}
-
-var DBClient = createDefaultDBClient()
-
-func createDefaultDBClient() *DB {
-	return CreateDBStorage(config.ServerConfig.DBDsn)
 }
 
 func CreateDBStorage(dsn string) *DB {

@@ -3,39 +3,47 @@ package middleware
 import (
 	"bytes"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/gennadyterekhov/gophermart/internal/tests"
+
+	"github.com/stretchr/testify/suite"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestLuhnOk(t *testing.T) {
-	run := tests.UsingTransactions()
-	setupTestServer()
+type luhnTestSuite struct {
+	suite.Suite
+	tests.TestHTTPServer
+}
 
-	t.Run("", run(func(t *testing.T) {
+func TestLuhn(t *testing.T) {
+	server := httptest.NewServer(
+		getTestRouter(),
+	)
+	suiteInstance := &luhnTestSuite{}
+
+	suiteInstance.Server = server
+	suite.Run(t, suiteInstance)
+}
+
+func (suite *luhnTestSuite) TestLuhnOk() {
+	suite.T().Run("", func(t *testing.T) {
 		rawJSON := `{"order":"4417123456789113"}`
 
-		responseStatusCode := tests.SendPostWithoutToken(
-			t,
-			tests.TestServer,
+		responseStatusCode := suite.SendPostWithoutToken(
 			"/luhn",
 			bytes.NewBuffer([]byte(rawJSON)),
 		)
 
 		assert.Equal(t, http.StatusOK, responseStatusCode)
-	}))
+	})
 }
 
-func TestLuhnOkWhenTextPlain(t *testing.T) {
-	run := tests.UsingTransactions()
-	setupTestServer()
-
-	t.Run("", run(func(t *testing.T) {
-		responseStatusCode := tests.SendPost(
-			t,
-			tests.TestServer,
+func (suite *luhnTestSuite) TestLuhnOkWhenTextPlain() {
+	suite.T().Run("", func(t *testing.T) {
+		responseStatusCode := suite.SendPost(
 			"/luhn",
 			"text/plain",
 			"",
@@ -43,53 +51,41 @@ func TestLuhnOkWhenTextPlain(t *testing.T) {
 		)
 
 		assert.Equal(t, http.StatusOK, responseStatusCode)
-	}))
+	})
 }
 
-func Test422WhenNoOrderInBody(t *testing.T) {
-	run := tests.UsingTransactions()
-	setupTestServer()
-
-	t.Run("", run(func(t *testing.T) {
+func (suite *luhnTestSuite) Test422WhenNoOrderInBody() {
+	suite.T().Run("", func(t *testing.T) {
 		rawJSON := `{"hello":"4417123456789113"}`
 
-		responseStatusCode := tests.SendPostWithoutToken(
-			t,
-			tests.TestServer,
+		responseStatusCode := suite.SendPostWithoutToken(
 			"/luhn",
 			bytes.NewBuffer([]byte(rawJSON)),
 		)
 
 		assert.Equal(t, http.StatusUnprocessableEntity, responseStatusCode)
-	}))
+	})
 }
 
-func Test422WhenIncorrectNumber(t *testing.T) {
-	run := tests.UsingTransactions()
-	setupTestServer()
-
-	t.Run("", run(func(t *testing.T) {
+func (suite *luhnTestSuite) Test422WhenIncorrectNumber() {
+	suite.T().Run("", func(t *testing.T) {
 		rawJSON := `{"order":"4417123456789119"}`
 
-		responseStatusCode := tests.SendPostWithoutToken(
-			t,
-			tests.TestServer,
+		responseStatusCode := suite.SendPostWithoutToken(
 			"/luhn",
 			bytes.NewBuffer([]byte(rawJSON)),
 		)
 
 		assert.Equal(t, http.StatusUnprocessableEntity, responseStatusCode)
-	}))
-	t.Run("", run(func(t *testing.T) {
+	})
+	suite.T().Run("", func(t *testing.T) {
 		rawJSON := `{"order":"441712a456789113"}`
 
-		responseStatusCode := tests.SendPostWithoutToken(
-			t,
-			tests.TestServer,
+		responseStatusCode := suite.SendPostWithoutToken(
 			"/luhn",
 			bytes.NewBuffer([]byte(rawJSON)),
 		)
 
 		assert.Equal(t, http.StatusUnprocessableEntity, responseStatusCode)
-	}))
+	})
 }

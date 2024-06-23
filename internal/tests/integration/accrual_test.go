@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gennadyterekhov/gophermart/internal/storage"
+
 	"github.com/gennadyterekhov/gophermart/internal/config"
 	"github.com/gennadyterekhov/gophermart/internal/fork"
 	"github.com/gennadyterekhov/gophermart/internal/httpui/handlers"
@@ -21,22 +23,37 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type AccrualClientSuite struct {
+type testSuite struct {
 	suite.Suite
-
+	tests.SuiteUsingTransactions
+	tests.TestHTTPServer
 	serverAddress string
 	serverPort    string
 	serverProcess *fork.BackgroundProcess
 	serverArgs    []string
 	envs          []string
+	cancelContext context.CancelFunc
 }
 
-var testSuite *AccrualClientSuite
+func (suite *testSuite) SetupSuite() {
+	conf := config.NewConfig()
+	db := storage.NewDB(helpers.TestDBDSN)
+	s := tests.NewTestHTTPServer(handlers.NewRouter(conf, db).Router)
+	suite.Server = s.Server
+	suite.serverAddress = conf.AccrualURL
+	suite.serverPort = "8080"
+	suite.serverProcess = nil
+	suite.serverArgs = []string{""}
+	suite.envs = []string{""}
 
-func (suite *AccrualClientSuite) SetupSuite() {
+	suite.SetDB(db)
+
+	ctx, cancelContext := context.WithTimeout(context.Background(), 30*time.Second)
+	suite.cancelContext = cancelContext
+	suite.serverUp(ctx, suite.envs, suite.serverArgs, suite.serverPort)
 }
 
-func (suite *AccrualClientSuite) serverUp(ctx context.Context, envs, args []string, port string) {
+func (suite *testSuite) serverUp(ctx context.Context, envs, args []string, port string) {
 	serverBinaryPath := "/Users/gena/code/yandex/practicum/golang_advanced/gophermart/cmd/accrual/accrual_darwin_arm64"
 	suite.serverProcess = fork.NewBackgroundProcess(
 		context.Background(),
@@ -60,11 +77,12 @@ func (suite *AccrualClientSuite) serverUp(ctx context.Context, envs, args []stri
 	}
 }
 
-func (suite *AccrualClientSuite) TearDownSuite() {
+func (suite *testSuite) TearDownSuite() {
+	suite.cancelContext()
 	suite.serverShutdown()
 }
 
-func (suite *AccrualClientSuite) serverShutdown() {
+func (suite *testSuite) serverShutdown() {
 	if suite.serverProcess == nil {
 		return
 	}
@@ -95,36 +113,18 @@ func (suite *AccrualClientSuite) serverShutdown() {
 	}
 }
 
-func TestMain(m *testing.M) {
-	tests.BeforeAll()
-	testSuite = &AccrualClientSuite{
-		serverAddress: config.ServerConfig.AccrualURL,
-		serverPort:    "8080",
-		serverProcess: nil,
-		serverArgs:    []string{""},
-		envs:          []string{""},
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	testSuite.serverUp(ctx, testSuite.envs, testSuite.serverArgs, testSuite.serverPort)
-	code := m.Run()
-	cancel()
-	testSuite.TearDownSuite()
-	tests.AfterAll()
-	os.Exit(code)
+func Test(t *testing.T) {
+	suite.Run(t, new(testSuite))
 }
 
-func Test202IfUploadedFirstTime(t *testing.T) {
-	testSuite.SetT(t)
-	run := tests.UsingTransactions()
-	tests.InitTestServer(handlers.GetRouter())
+func (suite *testSuite) Test202IfUploadedFirstTime() {
+	run := suite.UsingTransactions()
 
-	t.Run("", run(func(t *testing.T) {
+	suite.T().Run("", run(func(t *testing.T) {
 		var _ error
 		regDto := helpers.RegisterForTest("a", "a")
 
-		responseStatusCode := tests.SendPost(
-			t,
-			tests.TestServer,
+		responseStatusCode := suite.SendPost(
 			"/api/user/orders",
 			"text/plain",
 			regDto.Token,

@@ -5,17 +5,15 @@ import (
 	"time"
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
-
-	"github.com/gennadyterekhov/gophermart/internal/storage"
 )
 
-func GetAllOrdersForUser(ctx context.Context, userID int64) ([]order.Order, error) {
+func (repo *Repository) GetAllOrdersForUser(ctx context.Context, userID int64) ([]order.Order, error) {
 	const query = `SELECT 
     			       number, user_id, status, accrual, uploaded_at
 				   FROM orders 
 				   WHERE user_id = $1
 				   ORDER BY uploaded_at`
-	rows, err := storage.DBClient.Connection.QueryContext(ctx, query, userID)
+	rows, err := repo.DB.Connection.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -41,9 +39,9 @@ func GetAllOrdersForUser(ctx context.Context, userID int64) ([]order.Order, erro
 	return orders, nil
 }
 
-func GetOrderByID(ctx context.Context, number string) (*order.Order, error) {
+func (repo *Repository) GetOrderByID(ctx context.Context, number string) (*order.Order, error) {
 	const query = `SELECT number, user_id, status, accrual, uploaded_at FROM orders WHERE number = $1`
-	row := storage.DBClient.Connection.QueryRowContext(ctx, query, number)
+	row := repo.DB.Connection.QueryRowContext(ctx, query, number)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
@@ -57,9 +55,9 @@ func GetOrderByID(ctx context.Context, number string) (*order.Order, error) {
 	return &order, nil
 }
 
-func GetOrderByIDAndUserID(ctx context.Context, number string, userID int64) (*order.Order, error) {
+func (repo *Repository) GetOrderByIDAndUserID(ctx context.Context, number string, userID int64) (*order.Order, error) {
 	const query = `SELECT number, user_id, status, accrual, uploaded_at FROM orders WHERE number = $1 and user_id = $2`
-	row := storage.DBClient.Connection.QueryRowContext(ctx, query, number, userID)
+	row := repo.DB.Connection.QueryRowContext(ctx, query, number, userID)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
@@ -73,7 +71,7 @@ func GetOrderByIDAndUserID(ctx context.Context, number string, userID int64) (*o
 	return &order, nil
 }
 
-func AddOrder(
+func (repo *Repository) AddOrder(
 	ctx context.Context,
 	number string,
 	userID int64,
@@ -84,7 +82,7 @@ func AddOrder(
 	const query = `INSERT INTO orders (number, user_id, status, accrual, uploaded_at)
 			values ($1, $2, $3, $4, $5) RETURNING number;`
 
-	_, err := storage.DBClient.Connection.ExecContext(ctx, query, number, userID, status, accrual, uploadedAt)
+	_, err := repo.DB.Connection.ExecContext(ctx, query, number, userID, status, accrual, uploadedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +98,7 @@ func AddOrder(
 	return &order, nil
 }
 
-func UpdateOrder(
+func (repo *Repository) UpdateOrder(
 	ctx context.Context,
 	number string,
 	status string,
@@ -108,7 +106,7 @@ func UpdateOrder(
 ) error {
 	const query = `UPDATE orders SET status = $1, accrual = $2 WHERE number = $3;`
 
-	_, err := storage.DBClient.Connection.ExecContext(ctx, query, status, accrual, number)
+	_, err := repo.DB.Connection.ExecContext(ctx, query, status, accrual, number)
 	if err != nil {
 		return err
 	}

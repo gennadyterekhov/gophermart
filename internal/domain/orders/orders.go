@@ -20,13 +20,25 @@ const (
 	ErrorNumberAlreadyUploadedByAnotherUser = "ErrorNumberAlreadyUploadedByAnotherUser"
 )
 
-func GetAll(ctx context.Context) (*[]order.Order, error) {
+type Service struct {
+	Repository    repositories.Repository
+	AccrualClient client.AccrualClient
+}
+
+func NewService(repo repositories.Repository, cl client.AccrualClient) Service {
+	return Service{
+		Repository:    repo,
+		AccrualClient: cl,
+	}
+}
+
+func (service *Service) GetAll(ctx context.Context) (*[]order.Order, error) {
 	userID, ok := ctx.Value(middleware.ContextUserIDKey).(int64)
 	if !ok {
 		return nil, fmt.Errorf("cannot get user_id from context")
 	}
 
-	orders, err := repositories.GetAllOrdersForUser(ctx, userID)
+	orders, err := service.Repository.GetAllOrdersForUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -38,24 +50,24 @@ func GetAll(ctx context.Context) (*[]order.Order, error) {
 	return &orders, nil
 }
 
-func Create(ctx context.Context, reqDto *requests.Orders) error {
+func (service *Service) Create(ctx context.Context, reqDto *requests.Orders) error {
 	var err error
 	userID, ok := ctx.Value(middleware.ContextUserIDKey).(int64)
 	if !ok {
 		return fmt.Errorf("cannot get user_id from context")
 	}
 	var orderObj *order.Order
-	orderObj, err = repositories.GetOrderByIDAndUserID(ctx, reqDto.Number, userID)
+	orderObj, err = service.Repository.GetOrderByIDAndUserID(ctx, reqDto.Number, userID)
 	if err == nil && orderObj != nil {
 		return fmt.Errorf(ErrorNumberAlreadyUploaded)
 	}
 
-	orderObj, err = repositories.GetOrderByID(ctx, reqDto.Number)
+	orderObj, err = service.Repository.GetOrderByID(ctx, reqDto.Number)
 	if err == nil && orderObj != nil {
 		return fmt.Errorf(ErrorNumberAlreadyUploadedByAnotherUser)
 	}
 
-	orderObj, err = repositories.AddOrder(
+	orderObj, err = service.Repository.AddOrder(
 		ctx,
 		reqDto.Number,
 		userID,
@@ -67,12 +79,12 @@ func Create(ctx context.Context, reqDto *requests.Orders) error {
 		return err
 	}
 
-	_, err = client.RegisterOrderInAccrual(reqDto.Number)
+	_, err = service.AccrualClient.RegisterOrderInAccrual(reqDto.Number)
 	if err != nil {
 		return err
 	}
 
-	err = repositories.UpdateOrder(
+	err = service.Repository.UpdateOrder(
 		ctx,
 		reqDto.Number,
 		order.Processing,
@@ -82,7 +94,7 @@ func Create(ctx context.Context, reqDto *requests.Orders) error {
 		return err
 	}
 
-	client.LaunchAutoUpdate(orderObj)
+	service.AccrualClient.LaunchAutoUpdate(orderObj)
 
 	return nil
 }

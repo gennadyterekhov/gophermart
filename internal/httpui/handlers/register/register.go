@@ -12,14 +12,24 @@ import (
 	"github.com/gennadyterekhov/gophermart/internal/httpui/serializers"
 )
 
-func Handler() http.Handler {
+type Controller struct {
+	Service domain.Service
+}
+
+func NewController(service domain.Service) Controller {
+	return Controller{
+		Service: service,
+	}
+}
+
+func Handler(controller *Controller) http.Handler {
 	return middleware.WithoutAuth(
-		http.HandlerFunc(register),
+		http.HandlerFunc(controller.register),
 		middleware.RequestContentTypeJSON,
 	)
 }
 
-func register(res http.ResponseWriter, req *http.Request) {
+func (controller *Controller) register(res http.ResponseWriter, req *http.Request) {
 	logger.CustomLogger.Debugln("/api/user/register handler")
 
 	var err error
@@ -31,7 +41,7 @@ func register(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	resDto, err := domain.Register(req.Context(), reqDto)
+	resDto, err := controller.Service.Register(req.Context(), reqDto)
 	if err != nil {
 		status := http.StatusInternalServerError
 

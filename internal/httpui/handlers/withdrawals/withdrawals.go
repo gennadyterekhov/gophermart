@@ -15,25 +15,35 @@ import (
 	"github.com/gennadyterekhov/gophermart/internal/httpui/middleware"
 )
 
-func Handler() http.Handler {
+type Controller struct {
+	Service domain.Service
+}
+
+func NewController(service domain.Service) Controller {
+	return Controller{
+		Service: service,
+	}
+}
+
+func Handler(controller *Controller) http.Handler {
 	return middleware.WithAuth(
-		http.HandlerFunc(withdrawals),
+		http.HandlerFunc(controller.withdrawals),
 		middleware.ResponseContentTypeJSON,
 	)
 }
 
-func PostHandler() http.Handler {
+func PostHandler(controller *Controller) http.Handler {
 	return middleware.WithAuth(
-		http.HandlerFunc(createWithdrawal),
+		http.HandlerFunc(controller.createWithdrawal),
 		middleware.RequestContentTypeJSON,
 		middleware.Luhn,
 	)
 }
 
-func withdrawals(res http.ResponseWriter, req *http.Request) {
+func (controller *Controller) withdrawals(res http.ResponseWriter, req *http.Request) {
 	logger.CustomLogger.Debugln(req.Method + req.RequestURI + " handler")
 
-	resDto, err := domain.GetAll(req.Context())
+	resDto, err := controller.Service.GetAll(req.Context())
 	if err != nil {
 		logger.CustomLogger.Errorln(err.Error())
 
@@ -65,7 +75,7 @@ func withdrawals(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusOK)
 }
 
-func createWithdrawal(res http.ResponseWriter, req *http.Request) {
+func (controller *Controller) createWithdrawal(res http.ResponseWriter, req *http.Request) {
 	logger.CustomLogger.Debugln(req.Method + req.RequestURI + " handler")
 
 	reqDto, err := getRequestDto(req)
@@ -75,7 +85,7 @@ func createWithdrawal(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	_, err = domain.Create(req.Context(), reqDto)
+	_, err = controller.Service.Create(req.Context(), reqDto)
 	if err != nil {
 		logger.CustomLogger.Errorln("could not create wdr", err.Error())
 

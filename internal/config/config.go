@@ -14,14 +14,8 @@ type Config struct {
 	AccrualURL string
 }
 
-var ServerConfig *Config = &Config{
-	Addr:       "localhost:8888",
-	DBDsn:      "host=localhost user=gophermart_user password=gophermart_pass dbname=gophermart_db_test sslmode=disable",
-	AccrualURL: "http://localhost:8080",
-}
-
-func Init() {
-	ServerConfig = getConfig()
+func NewConfig() *Config {
+	return getConfig()
 }
 
 func getConfig() *Config {

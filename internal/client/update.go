@@ -21,17 +21,17 @@ var (
 	mu          sync.Mutex // maybe use atomics https://github.com/gennadyterekhov/gophermart/issues/24
 )
 
-func initializeChannel() {
+func (ac *AccrualClient) initializeChannel() {
 	jobsChannel = make(chan *Job)
 
 	createWorkers()
 	go func() {
-		workerPool()
+		ac.workerPool()
 	}()
 }
 
-func LaunchAutoUpdate(order *model.Order) {
-	once.Do(initializeChannel)
+func (ac *AccrualClient) LaunchAutoUpdate(order *model.Order) {
+	once.Do(ac.initializeChannel)
 	job := createJob(order)
 
 	go func(job *Job) {

@@ -12,13 +12,23 @@ import (
 
 const ErrorNotUniqueLogin = "ERROR: duplicate key value violates unique constraint \"users_login_key\" (SQLSTATE 23505)"
 
-func Register(ctx context.Context, reqDto *requests.Register) (*responses.Register, error) {
+type Service struct {
+	Repository repositories.Repository
+}
+
+func NewService(repo repositories.Repository) Service {
+	return Service{
+		Repository: repo,
+	}
+}
+
+func (service *Service) Register(ctx context.Context, reqDto *requests.Register) (*responses.Register, error) {
 	encryptedPassword, err := encrypt(reqDto.Password)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := repositories.AddUser(ctx, reqDto.Login, encryptedPassword)
+	user, err := service.Repository.AddUser(ctx, reqDto.Login, encryptedPassword)
 	if err != nil {
 		return nil, err
 	}

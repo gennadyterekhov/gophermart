@@ -7,7 +7,6 @@ import (
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
 	"github.com/gennadyterekhov/gophermart/internal/logger"
-	"github.com/gennadyterekhov/gophermart/internal/repositories"
 )
 
 type Worker struct{}
@@ -25,7 +24,7 @@ func createWorker() *Worker {
 	return &Worker{}
 }
 
-func handleJob(job *Job) error {
+func (ac *AccrualClient) handleJob(job *Job) error {
 	if job == nil {
 		return fmt.Errorf("job is nil in worker")
 	}
@@ -42,7 +41,7 @@ func handleJob(job *Job) error {
 		time.Sleep(time.Duration(retryAfter) * time.Second)
 	}
 
-	response, err := GetStatus(job.OrderNumber)
+	response, err := ac.GetStatus(job.OrderNumber)
 	if err != nil {
 		return err
 	}
@@ -61,9 +60,9 @@ func handleJob(job *Job) error {
 		if response.CorrectResponse.Accrual != nil {
 			intAccrual := int64(100.0 * (*response.CorrectResponse.Accrual))
 			job.Accrual = &intAccrual
-			err = repositories.UpdateOrder(context.Background(), job.OrderNumber, job.OrderStatus, job.Accrual)
+			err = ac.Repository.UpdateOrder(context.Background(), job.OrderNumber, job.OrderStatus, job.Accrual)
 		} else {
-			err = repositories.UpdateOrder(context.Background(), job.OrderNumber, job.OrderStatus, nil)
+			err = ac.Repository.UpdateOrder(context.Background(), job.OrderNumber, job.OrderStatus, nil)
 		}
 
 		if err != nil {
@@ -87,11 +86,11 @@ func handleJob(job *Job) error {
 	return nil
 }
 
-func workerPool() {
+func (ac *AccrualClient) workerPool() {
 	for w := 0; w < numberOfWorkers; w++ {
 		go func() {
 			for j := range jobsChannel {
-				err := handleJob(j)
+				err := ac.handleJob(j)
 				if err != nil {
 					logger.CustomLogger.Errorln("error in worker", err.Error())
 					return

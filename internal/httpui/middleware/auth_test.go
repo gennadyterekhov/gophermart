@@ -3,8 +3,11 @@ package middleware
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
+
+	"github.com/gennadyterekhov/gophermart/internal/storage"
+
+	"github.com/stretchr/testify/suite"
 
 	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
 
@@ -14,14 +17,23 @@ import (
 	"github.com/gennadyterekhov/gophermart/internal/tests"
 )
 
-func TestMain(m *testing.M) {
-	tests.BeforeAll()
-	code := m.Run()
-	tests.AfterAll()
-	os.Exit(code)
+type authTestSuite struct {
+	suite.Suite
+	tests.TestHTTPServer
+	tests.SuiteUsingTransactions
 }
 
-func setupTestServer() {
+func TestAuth(t *testing.T) {
+	server := httptest.NewServer(
+		getTestRouter(),
+	)
+	suiteInstance := &authTestSuite{}
+	suiteInstance.SetDB(storage.NewDB(helpers.TestDBDSN))
+	suiteInstance.Server = server
+	suite.Run(t, suiteInstance)
+}
+
+func getTestRouter() *chi.Mux {
 	testRouter := chi.NewRouter()
 	testRouter.Get(
 		"/auth",
@@ -46,22 +58,17 @@ func setupTestServer() {
 				res.WriteHeader(200)
 			}),
 		).ServeHTTP,
-	)
-	tests.TestServer = httptest.NewServer(
-		testRouter,
-	)
+	) //
+	return testRouter
 }
 
-func TestCanAuthWithToken(t *testing.T) {
-	run := tests.UsingTransactions()
-	setupTestServer()
+func (suite *authTestSuite) TestCanAuthWithToken() {
+	run := suite.UsingTransactions()
 
-	t.Run("", run(func(t *testing.T) {
+	suite.T().Run("", run(func(t *testing.T) {
 		resDto := helpers.RegisterForTest("a", "a")
 
-		responseStatusCode, _ := tests.SendGet(
-			t,
-			tests.TestServer,
+		responseStatusCode, _ := suite.SendGet(
 			"/auth",
 			resDto.Token,
 		)
@@ -70,16 +77,13 @@ func TestCanAuthWithToken(t *testing.T) {
 	}))
 }
 
-func Test401IfNoToken(t *testing.T) {
-	run := tests.UsingTransactions()
-	setupTestServer()
+func (suite *authTestSuite) Test401IfNoToken() {
+	run := suite.UsingTransactions()
 
-	t.Run("", run(func(t *testing.T) {
+	suite.T().Run("", run(func(t *testing.T) {
 		helpers.RegisterForTest("a", "a")
 
-		responseStatusCode, _ := tests.SendGet(
-			t,
-			tests.TestServer,
+		responseStatusCode, _ := suite.SendGet(
 			"/auth",
 			"incorrect token",
 		)

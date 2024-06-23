@@ -10,6 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gennadyterekhov/gophermart/internal/tests"
+
+	"github.com/gennadyterekhov/gophermart/internal/storage"
+
 	"github.com/gennadyterekhov/gophermart/internal/luhn"
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
@@ -26,30 +30,37 @@ import (
 
 	"github.com/go-resty/resty/v2"
 
-	"github.com/gennadyterekhov/gophermart/internal/config"
-
 	"github.com/gennadyterekhov/gophermart/internal/fork"
 
-	"github.com/gennadyterekhov/gophermart/internal/tests"
 	"github.com/stretchr/testify/suite"
 )
 
-type AccrualClientSuite struct {
+type testSuite struct {
 	suite.Suite
+	tests.SuiteUsingTransactions
 
 	serverAddress string
 	serverPort    string
 	serverProcess *fork.BackgroundProcess
 	serverArgs    []string
 	envs          []string
+	cancelContext context.CancelFunc
 }
 
-var testSuite *AccrualClientSuite
+func (suite *testSuite) SetupSuite() {
+	suite.serverAddress = "http://localhost"
+	suite.serverPort = "8089"
+	suite.serverProcess = nil
+	suite.serverArgs = []string{""}
+	suite.envs = []string{""}
+	suite.SetDB(storage.NewDB(helpers.TestDBDSN))
 
-func (suite *AccrualClientSuite) SetupSuite() {
+	ctx, cancelContext := context.WithTimeout(context.Background(), 30*time.Second)
+	suite.serverUp(ctx, suite.envs, suite.serverArgs, suite.serverPort)
+	suite.cancelContext = cancelContext
 }
 
-func (suite *AccrualClientSuite) serverUp(ctx context.Context, envs, args []string, port string) {
+func (suite *testSuite) serverUp(ctx context.Context, envs, args []string, port string) {
 	serverBinaryPath := "/Users/gena/code/yandex/practicum/golang_advanced/gophermart/cmd/accrual/accrual_darwin_arm64"
 	suite.serverProcess = fork.NewBackgroundProcess(
 		context.Background(),
@@ -73,11 +84,12 @@ func (suite *AccrualClientSuite) serverUp(ctx context.Context, envs, args []stri
 	}
 }
 
-func (suite *AccrualClientSuite) TearDownSuite() {
+func (suite *testSuite) TearDownSuite() {
+	suite.cancelContext()
 	suite.serverShutdown()
 }
 
-func (suite *AccrualClientSuite) serverShutdown() {
+func (suite *testSuite) serverShutdown() {
 	if suite.serverProcess == nil {
 		return
 	}
@@ -108,39 +120,23 @@ func (suite *AccrualClientSuite) serverShutdown() {
 	}
 }
 
-func TestMain(m *testing.M) {
-	tests.BeforeAll()
-	testSuite = &AccrualClientSuite{
-		serverAddress: config.ServerConfig.AccrualURL,
-		serverPort:    "8080",
-		serverProcess: nil,
-		serverArgs:    []string{""},
-		envs:          []string{""},
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	testSuite.serverUp(ctx, testSuite.envs, testSuite.serverArgs, testSuite.serverPort)
-	code := m.Run()
-	cancel()
-	testSuite.TearDownSuite()
-	tests.AfterAll()
-	os.Exit(code)
+func Test(t *testing.T) {
+	suite.Run(t, new(testSuite))
 }
 
-func TestCanGetOrderStatus(t *testing.T) {
-	testSuite.SetT(t)
-
-	run := tests.UsingTransactions()
-	t.Run("", run(func(t *testing.T) {
-		userDto := helpers.RegisterForTest("a", "a")
+func (suite *testSuite) TestCanGetOrderStatus() {
+	run := suite.UsingTransactions()
+	suite.T().Run("", run(func(t *testing.T) {
+		userDto := helpers.RegisterForTest("b", "a")
 		number := luhn.Generate(1)
-		createOrder(t, userDto, number)
+		suite.createOrder(userDto, number)
 
 		httpc := resty.NewWithClient(&http.Client{
 			Transport: &http.Transport{
 				DisableCompression: true,
 			},
-		}).SetBaseURL(testSuite.serverAddress)
-		registerOrderInAccrual(t, httpc, number)
+		}).SetBaseURL(suite.serverAddress)
+		suite.registerOrderInAccrual(httpc, number)
 		time.Sleep(time.Millisecond * 20)
 
 		req := httpc.R()
@@ -151,26 +147,24 @@ func TestCanGetOrderStatus(t *testing.T) {
 	}))
 }
 
-func TestTooManyRequests(t *testing.T) {
-	t.Skipf("cannot test")
+func (suite *testSuite) TestTooManyRequests() {
+	suite.T().Skipf("cannot test")
 }
 
-func TestNoContent(t *testing.T) {
-	t.Skipf("cannot test in suite because it can run after registration and will fail")
+func (suite *testSuite) TestNoContent() {
+	suite.T().Skipf("cannot test in suite because it can run after registration and will fail")
 
-	testSuite.SetT(t)
-
-	run := tests.UsingTransactions()
-	t.Run("", run(func(t *testing.T) {
+	run := suite.UsingTransactions()
+	suite.T().Run("", run(func(t *testing.T) {
 		userDto := helpers.RegisterForTest("a", "a")
 		number := luhn.Generate(1)
-		createOrder(t, userDto, number)
+		suite.createOrder(userDto, number)
 
 		httpc := resty.NewWithClient(&http.Client{
 			Transport: &http.Transport{
 				DisableCompression: true,
 			},
-		}).SetBaseURL(testSuite.serverAddress)
+		}).SetBaseURL(suite.serverAddress)
 
 		req := httpc.R()
 		resp, err := req.Get(fmt.Sprintf("/api/orders/%v", number))
@@ -180,17 +174,17 @@ func TestNoContent(t *testing.T) {
 	}))
 }
 
-func TestInternalServerError(t *testing.T) {
-	t.Skipf("cannot test")
+func (suite *testSuite) TestInternalServerError() {
+	suite.T().Skipf("cannot test")
 }
 
-func createOrder(
-	t *testing.T,
+func (suite *testSuite) createOrder(
 	userDto *responses.Register,
 	number string,
 ) *order.Order {
 	var ten int64 = 10
-	orderNewest, err := repositories.AddOrder(
+	repo := repositories.NewRepository(storage.NewDB("host=localhost user=gophermart_user password=gophermart_pass dbname=gophermart_db_test sslmode=disable"))
+	orderNewest, err := repo.AddOrder(
 		context.Background(),
 		number,
 		userDto.ID,
@@ -198,13 +192,12 @@ func createOrder(
 		&ten,
 		time.Time{},
 	)
-	assert.NoError(t, err)
+	assert.NoError(suite.T(), err)
 
 	return orderNewest
 }
 
-func registerOrderInAccrual(
-	t *testing.T,
+func (suite *testSuite) registerOrderInAccrual(
 	httpc *resty.Client,
 	number string,
 ) {
@@ -225,7 +218,7 @@ func registerOrderInAccrual(
 		SetBody(o)
 
 	resp, err := req.Post("/api/orders")
-	require.NoError(t, err)
+	require.NoError(suite.T(), err)
 	logger.CustomLogger.Debugln(resp.StatusCode())
 	logger.CustomLogger.Debugln(string(resp.Body()))
 }

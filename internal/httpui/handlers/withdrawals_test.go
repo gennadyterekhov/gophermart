@@ -9,6 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/suite"
+
+	"github.com/gennadyterekhov/gophermart/internal/storage"
+
 	"github.com/gennadyterekhov/gophermart/internal/luhn"
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
@@ -19,13 +23,30 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCanSendWithdrawalsRequest(t *testing.T) {
-	run := tests.UsingTransactions()
-	tests.InitTestServer(GetRouter())
+type withdrawalsTestSuite struct {
+	suite.Suite
+	tests.SuiteUsingTransactions
+	tests.TestHTTPServer
+	Repository repositories.Repository
+}
 
-	t.Run("", run(func(t *testing.T) {
+func TestWithdrawals(t *testing.T) {
+	db := storage.NewDB(tests.TestDBDSN)
+
+	suiteInstance := &withdrawalsTestSuite{
+		Repository: repositories.NewRepository(db),
+	}
+	suiteInstance.SetDB(db)
+
+	suite.Run(t, suiteInstance)
+}
+
+func (suite *withdrawalsTestSuite) TestCanSendWithdrawalsRequest() {
+	run := suite.UsingTransactions()
+
+	suite.T().Run("", run(func(t *testing.T) {
 		regDto := helpers.RegisterForTest("a", "a")
-		withdrawalNewest, err := repositories.AddWithdrawal(
+		withdrawalNewest, err := suite.Repository.AddWithdrawal(
 			context.Background(),
 			regDto.ID,
 			"a",
@@ -34,9 +55,8 @@ func TestCanSendWithdrawalsRequest(t *testing.T) {
 		)
 		assert.NoError(t, err)
 
-		responseStatusCode, bodyAsBytes := tests.SendGet(
-			t,
-			tests.TestServer,
+		responseStatusCode, bodyAsBytes := suite.SendGet(
+
 			"/api/user/withdrawals",
 			regDto.Token,
 		)
@@ -50,16 +70,14 @@ func TestCanSendWithdrawalsRequest(t *testing.T) {
 	}))
 }
 
-func Test204IfNoContent(t *testing.T) {
-	run := tests.UsingTransactions()
-	tests.InitTestServer(GetRouter())
+func (suite *withdrawalsTestSuite) Test204IfNoContent() {
+	run := suite.UsingTransactions()
 
-	t.Run("", run(func(t *testing.T) {
+	suite.T().Run("", run(func(t *testing.T) {
 		regDto := helpers.RegisterForTest("a", "a")
 
-		responseStatusCode, _ := tests.SendGet(
-			t,
-			tests.TestServer,
+		responseStatusCode, _ := suite.SendGet(
+
 			"/api/user/withdrawals",
 			regDto.Token,
 		)
@@ -68,14 +86,13 @@ func Test204IfNoContent(t *testing.T) {
 	}))
 }
 
-func TestCanCreateWithdrawalsWithFloat(t *testing.T) {
-	run := tests.UsingTransactions()
-	tests.InitTestServer(GetRouter())
+func (suite *withdrawalsTestSuite) TestCanCreateWithdrawalsWithFloat() {
+	run := suite.UsingTransactions()
 
-	t.Run("", run(func(t *testing.T) {
+	suite.T().Run("", run(func(t *testing.T) {
 		regDto := helpers.RegisterForTest("a", "a")
 		var accrual int64 = 160
-		_, err := repositories.AddOrder(
+		_, err := suite.Repository.AddOrder(
 			context.Background(),
 			"a",
 			regDto.ID,
@@ -87,9 +104,8 @@ func TestCanCreateWithdrawalsWithFloat(t *testing.T) {
 
 		orderNumber := luhn.Generate(1)
 		rawJSON := fmt.Sprintf(`{"order":"%v", "sum":1.5}`, orderNumber)
-		responseStatusCode := tests.SendPost(
-			t,
-			tests.TestServer,
+		responseStatusCode := suite.SendPost(
+
 			"/api/user/balance/withdraw",
 			"application/json",
 			regDto.Token,
@@ -100,14 +116,13 @@ func TestCanCreateWithdrawalsWithFloat(t *testing.T) {
 	}))
 }
 
-func TestCannotCreateWithdrawalsWithIncorrectNumber(t *testing.T) {
-	run := tests.UsingTransactions()
-	tests.InitTestServer(GetRouter())
+func (suite *withdrawalsTestSuite) TestCannotCreateWithdrawalsWithIncorrectNumber() {
+	run := suite.UsingTransactions()
 
-	t.Run("", run(func(t *testing.T) {
+	suite.T().Run("", run(func(t *testing.T) {
 		regDto := helpers.RegisterForTest("a", "a")
 		var accrual int64 = 10
-		_, err := repositories.AddOrder(
+		_, err := suite.Repository.AddOrder(
 			context.Background(),
 			"a",
 			regDto.ID,
@@ -118,9 +133,8 @@ func TestCannotCreateWithdrawalsWithIncorrectNumber(t *testing.T) {
 		require.NoError(t, err)
 
 		rawJSON := `{"order":"123", "sum":1}`
-		responseStatusCode := tests.SendPost(
-			t,
-			tests.TestServer,
+		responseStatusCode := suite.SendPost(
+
 			"/api/user/balance/withdraw",
 			"application/json",
 			regDto.Token,
@@ -131,17 +145,14 @@ func TestCannotCreateWithdrawalsWithIncorrectNumber(t *testing.T) {
 	}))
 }
 
-func Test402WhenNotEnoughBalance(t *testing.T) {
-	run := tests.UsingTransactions()
-	tests.InitTestServer(GetRouter())
+func (suite *withdrawalsTestSuite) Test402WhenNotEnoughBalance() {
+	run := suite.UsingTransactions()
 
-	t.Run("", run(func(t *testing.T) {
+	suite.T().Run("", run(func(t *testing.T) {
 		regDto := helpers.RegisterForTest("a", "a")
 
 		rawJSON := `{"order":"4417123456789113", "sum":1}`
-		responseStatusCode := tests.SendPost(
-			t,
-			tests.TestServer,
+		responseStatusCode := suite.SendPost(
 			"/api/user/balance/withdraw",
 			"application/json",
 			regDto.Token,
@@ -152,16 +163,13 @@ func Test402WhenNotEnoughBalance(t *testing.T) {
 	}))
 }
 
-func Test401IfNoToken(t *testing.T) {
-	run := tests.UsingTransactions()
-	tests.InitTestServer(GetRouter())
+func (suite *withdrawalsTestSuite) Test401IfNoToken() {
+	run := suite.UsingTransactions()
 
-	t.Run("", run(func(t *testing.T) {
+	suite.T().Run("", run(func(t *testing.T) {
 		helpers.RegisterForTest("a", "a")
 
-		responseStatusCode, _ := tests.SendGet(
-			t,
-			tests.TestServer,
+		responseStatusCode, _ := suite.SendGet(
 			"/api/user/withdrawals",
 			"",
 		)

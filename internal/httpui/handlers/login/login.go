@@ -15,14 +15,24 @@ import (
 	"github.com/gennadyterekhov/gophermart/internal/domain/requests"
 )
 
-func Handler() http.Handler {
+type Controller struct {
+	Service auth.Service
+}
+
+func NewController(service auth.Service) Controller {
+	return Controller{
+		Service: service,
+	}
+}
+
+func Handler(controller *Controller) http.Handler {
 	return middleware.WithoutAuth(
-		http.HandlerFunc(login),
+		http.HandlerFunc(controller.login),
 		middleware.RequestContentTypeJSON,
 	)
 }
 
-func login(res http.ResponseWriter, req *http.Request) {
+func (controller *Controller) login(res http.ResponseWriter, req *http.Request) {
 	logger.CustomLogger.Debugln("/api/user/login handler")
 
 	reqDto, err := getRequestDto(req)
@@ -32,7 +42,7 @@ func login(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	resDto, err := auth.Login(req.Context(), reqDto)
+	resDto, err := controller.Service.Login(req.Context(), reqDto)
 	if err != nil {
 		status := http.StatusInternalServerError
 
