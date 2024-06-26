@@ -5,35 +5,28 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gennadyterekhov/gophermart/internal/tests"
+	"github.com/gennadyterekhov/gophermart/internal/tests/suites/base"
 
 	"github.com/stretchr/testify/suite"
-
-	"github.com/gennadyterekhov/gophermart/internal/storage"
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/balance"
 	"github.com/gennadyterekhov/gophermart/internal/domain/models"
 	"github.com/gennadyterekhov/gophermart/internal/domain/requests"
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
 	"github.com/gennadyterekhov/gophermart/internal/httpui/middleware"
-	"github.com/gennadyterekhov/gophermart/internal/repositories"
-	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type testSuite struct {
-	suite.Suite
-	tests.SuiteUsingTransactions
+	base.BaseSuite
 	Service Service
 }
 
 func (suite *testSuite) SetupSuite() {
-	db := storage.NewDB(helpers.TestDBDSN)
-	repo := repositories.NewRepository(db)
-	suite.SetDB(db)
-	//	suiteInstance.SetDB(storage.NewDB(helpers.TestDBDSN))
-	suite.Service = NewService(repo, balance.NewService(repo))
+	base.InitBaseSuite(suite)
+
+	suite.Service = NewService(suite.GetRepository(), balance.NewService(suite.GetRepository()))
 }
 
 func Test(t *testing.T) {
@@ -44,7 +37,7 @@ func (suite *testSuite) TestCanGetWithdrawals() {
 	run := suite.UsingTransactions()
 
 	suite.T().Run("", run(func(t *testing.T) {
-		userDto := helpers.RegisterForTest("a", "a")
+		userDto := suite.RegisterForTest("a", "a")
 		withdrawalNewest, withdrawalMedium, withdrawalOldest := suite.createDifferentWithdrawals(userDto)
 
 		ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
@@ -62,7 +55,7 @@ func (suite *testSuite) TestNoContentReturnsError() {
 	run := suite.UsingTransactions()
 
 	suite.T().Run("", run(func(t *testing.T) {
-		userDto := helpers.RegisterForTest("a", "a")
+		userDto := suite.RegisterForTest("a", "a")
 		ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
 		_, err := suite.Service.GetAll(ctx)
 		assert.Equal(t, err.Error(), ErrorNoContent)
@@ -73,7 +66,7 @@ func (suite *testSuite) TestCanCreateWithdrawals() {
 	run := suite.UsingTransactions()
 
 	suite.T().Run("", run(func(t *testing.T) {
-		userDto := helpers.RegisterForTest("a", "a")
+		userDto := suite.RegisterForTest("a", "a")
 		var accrual int64 = 101
 		_, err := suite.Service.Repository.AddOrder(
 			context.Background(),
@@ -103,7 +96,7 @@ func (suite *testSuite) TestCannotCreateWithdrawalsIfNotEnoughBalance() {
 	run := suite.UsingTransactions()
 
 	suite.T().Run("", run(func(t *testing.T) {
-		userDto := helpers.RegisterForTest("a", "a")
+		userDto := suite.RegisterForTest("a", "a")
 		var accrual int64 = 5
 		_, err := suite.Service.Repository.AddOrder(
 			context.Background(),

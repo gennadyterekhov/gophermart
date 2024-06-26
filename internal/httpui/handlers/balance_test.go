@@ -7,40 +7,31 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gennadyterekhov/gophermart/internal/tests/suites/with_server"
+
 	"github.com/stretchr/testify/suite"
 
-	"github.com/gennadyterekhov/gophermart/internal/storage"
-
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
-	"github.com/gennadyterekhov/gophermart/internal/repositories"
-	"github.com/gennadyterekhov/gophermart/internal/tests"
-	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type balanceTestSuite struct {
-	suite.Suite
-	tests.SuiteUsingTransactions
-	tests.TestHTTPServer
-	Repository repositories.Repository
+	with_server.BaseSuiteWithServer
+}
+
+func (suite *balanceTestSuite) SetupSuite() {
+	with_server.InitBaseSuiteWithServer(suite)
 }
 
 func TestBalance(t *testing.T) {
-	db := storage.NewDB(tests.TestDBDSN)
-
-	suiteInstance := &balanceTestSuite{
-		Repository: repositories.NewRepository(db),
-	}
-	suiteInstance.SetDB(db)
-
-	suite.Run(t, suiteInstance)
+	suite.Run(t, new(balanceTestSuite))
 }
 
 func (suite *balanceTestSuite) TestCanSendBalanceRequest() {
 	run := suite.UsingTransactions()
 	suite.T().Run("", run(func(t *testing.T) {
-		regDto := helpers.RegisterForTest("a", "a")
+		regDto := suite.RegisterForTest("a", "a")
 		_, err := suite.Repository.AddWithdrawal(context.Background(), regDto.ID, "", 100, time.Time{})
 		assert.NoError(t, err)
 
@@ -66,7 +57,7 @@ func (suite *balanceTestSuite) TestBalance401IfNoToken() {
 	run := suite.UsingTransactions()
 
 	suite.T().Run("", run(func(t *testing.T) {
-		helpers.RegisterForTest("a", "a")
+		suite.RegisterForTest("a", "a")
 
 		responseStatusCode, _ := suite.SendGet(
 			"/api/user/balance",

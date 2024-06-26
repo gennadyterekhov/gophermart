@@ -23,11 +23,11 @@ const (
 )
 
 type Service struct {
-	Repository     repositories.Repository
+	Repository     repositories.RepositoryInterface
 	BalanceService balance.Service
 }
 
-func NewService(repo repositories.Repository, balanceService balance.Service) Service {
+func NewService(repo repositories.RepositoryInterface, balanceService balance.Service) Service {
 	return Service{
 		Repository:     repo,
 		BalanceService: balanceService,

@@ -6,32 +6,21 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/gennadyterekhov/gophermart/internal/repositories"
+	"github.com/gennadyterekhov/gophermart/internal/tests/suites/with_server"
+
 	"github.com/stretchr/testify/suite"
 
-	"github.com/gennadyterekhov/gophermart/internal/storage"
-
-	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
-
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
-	"github.com/gennadyterekhov/gophermart/internal/tests"
 	"github.com/stretchr/testify/assert"
 )
 
 type loginTestSuite struct {
-	suite.Suite
-	tests.SuiteUsingTransactions
-	tests.TestHTTPServer
-	Repository repositories.Repository
+	with_server.BaseSuiteWithServer
 }
 
-func TestLogin(t *testing.T) {
-	db := storage.NewDB(tests.TestDBDSN)
-
-	suiteInstance := &loginTestSuite{
-		Repository: repositories.NewRepository(db),
-	}
-	suiteInstance.SetDB(db)
+func TestLoginHandler(t *testing.T) {
+	suiteInstance := &loginTestSuite{}
+	with_server.InitBaseSuiteWithServer(suiteInstance)
 
 	suite.Run(t, suiteInstance)
 }
@@ -40,7 +29,7 @@ func (suite *loginTestSuite) TestCanSendLoginRequest() {
 	run := suite.UsingTransactions()
 
 	suite.T().Run("", run(func(t *testing.T) {
-		helpers.RegisterForTest("a", "a")
+		suite.RegisterForTest("a", "a")
 
 		rawJSON := `{"login":"a", "password":"a"}`
 		responseStatusCode, bodyAsBytes := suite.SendPostAndReturnBody(
@@ -62,7 +51,7 @@ func (suite *loginTestSuite) TestCanSendLoginRequest() {
 func (suite *loginTestSuite) TestCannotLoginWithWrongFieldName() {
 	run := suite.UsingTransactions()
 	suite.T().Run("", run(func(t *testing.T) {
-		helpers.RegisterForTest("a", "a")
+		suite.RegisterForTest("a", "a")
 
 		rawJSON := `{"logi":"a", "password":"a"}`
 		responseStatusCode := suite.SendPost(
@@ -80,7 +69,7 @@ func (suite *loginTestSuite) TestCannotLoginWithWrongContentType() {
 	run := suite.UsingTransactions()
 
 	suite.T().Run("", run(func(t *testing.T) {
-		helpers.RegisterForTest("a", "a")
+		suite.RegisterForTest("a", "a")
 
 		rawJSON := `{"login":"a", "password":"a"}`
 		responseStatusCode := suite.SendPost(

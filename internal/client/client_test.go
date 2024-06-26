@@ -10,9 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gennadyterekhov/gophermart/internal/tests"
-
-	"github.com/gennadyterekhov/gophermart/internal/storage"
+	"github.com/gennadyterekhov/gophermart/internal/tests/suites/base"
 
 	"github.com/gennadyterekhov/gophermart/internal/luhn"
 
@@ -22,10 +20,7 @@ import (
 
 	"github.com/gennadyterekhov/gophermart/internal/logger"
 
-	"github.com/gennadyterekhov/gophermart/internal/tests/helpers"
-
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
-	"github.com/gennadyterekhov/gophermart/internal/repositories"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/go-resty/resty/v2"
@@ -36,8 +31,7 @@ import (
 )
 
 type testSuite struct {
-	suite.Suite
-	tests.SuiteUsingTransactions
+	base.BaseSuite
 
 	serverAddress string
 	serverPort    string
@@ -48,12 +42,13 @@ type testSuite struct {
 }
 
 func (suite *testSuite) SetupSuite() {
+	base.InitBaseSuite(suite)
+
 	suite.serverAddress = "http://localhost"
 	suite.serverPort = "8089"
 	suite.serverProcess = nil
 	suite.serverArgs = []string{""}
 	suite.envs = []string{""}
-	suite.SetDB(storage.NewDB(helpers.TestDBDSN))
 
 	ctx, cancelContext := context.WithTimeout(context.Background(), 30*time.Second)
 	suite.serverUp(ctx, suite.envs, suite.serverArgs, suite.serverPort)
@@ -127,7 +122,7 @@ func Test(t *testing.T) {
 func (suite *testSuite) TestCanGetOrderStatus() {
 	run := suite.UsingTransactions()
 	suite.T().Run("", run(func(t *testing.T) {
-		userDto := helpers.RegisterForTest("b", "a")
+		userDto := suite.RegisterForTest("b", "a")
 		number := luhn.Generate(1)
 		suite.createOrder(userDto, number)
 
@@ -156,7 +151,7 @@ func (suite *testSuite) TestNoContent() {
 
 	run := suite.UsingTransactions()
 	suite.T().Run("", run(func(t *testing.T) {
-		userDto := helpers.RegisterForTest("a", "a")
+		userDto := suite.RegisterForTest("a", "a")
 		number := luhn.Generate(1)
 		suite.createOrder(userDto, number)
 
@@ -183,8 +178,7 @@ func (suite *testSuite) createOrder(
 	number string,
 ) *order.Order {
 	var ten int64 = 10
-	repo := repositories.NewRepository(storage.NewDB("host=localhost user=gophermart_user password=gophermart_pass dbname=gophermart_db_test sslmode=disable"))
-	orderNewest, err := repo.AddOrder(
+	orderNewest, err := suite.Repository.AddOrder(
 		context.Background(),
 		number,
 		userDto.ID,

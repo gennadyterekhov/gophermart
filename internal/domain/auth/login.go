@@ -15,10 +15,10 @@ import (
 const ErrorWrongCredentials = "unknown credentials"
 
 type Service struct {
-	Repository repositories.Repository
+	Repository repositories.RepositoryInterface
 }
 
-func NewService(repo repositories.Repository) Service {
+func NewService(repo repositories.RepositoryInterface) Service {
 	return Service{
 		Repository: repo,
 	}
@@ -27,6 +27,9 @@ func NewService(repo repositories.Repository) Service {
 func (service *Service) Login(ctx context.Context, reqDto *requests.Login) (*responses.Login, error) {
 	user, err := service.Repository.GetUserByLogin(ctx, reqDto.Login)
 	if err != nil {
+		return nil, fmt.Errorf(ErrorWrongCredentials)
+	}
+	if user == nil {
 		return nil, fmt.Errorf(ErrorWrongCredentials)
 	}
 

@@ -13,10 +13,10 @@ import (
 const ErrorNotUniqueLogin = "ERROR: duplicate key value violates unique constraint \"users_login_key\" (SQLSTATE 23505)"
 
 type Service struct {
-	Repository repositories.Repository
+	Repository repositories.RepositoryInterface
 }
 
-func NewService(repo repositories.Repository) Service {
+func NewService(repo repositories.RepositoryInterface) Service {
 	return Service{
 		Repository: repo,
 	}
