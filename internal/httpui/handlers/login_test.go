@@ -26,59 +26,48 @@ func TestLoginHandler(t *testing.T) {
 }
 
 func (suite *loginTestSuite) TestCanSendLoginRequest() {
-	run := suite.UsingTransactions()
+	suite.RegisterForTest("a", "a")
 
-	suite.T().Run("", run(func(t *testing.T) {
-		suite.RegisterForTest("a", "a")
+	rawJSON := `{"login":"a", "password":"a"}`
+	responseStatusCode, bodyAsBytes := suite.SendPostAndReturnBody(
+		"/api/user/login",
+		"application/json",
+		"",
+		bytes.NewBuffer([]byte(rawJSON)),
+	)
 
-		rawJSON := `{"login":"a", "password":"a"}`
-		responseStatusCode, bodyAsBytes := suite.SendPostAndReturnBody(
-			"/api/user/login",
-			"application/json",
-			"",
-			bytes.NewBuffer([]byte(rawJSON)),
-		)
+	assert.Equal(suite.T(), http.StatusOK, responseStatusCode)
 
-		assert.Equal(t, http.StatusOK, responseStatusCode)
-
-		responseBody := &responses.Login{Token: ""}
-		err := json.Unmarshal(bodyAsBytes, responseBody)
-		assert.NoError(t, err)
-		assert.NotEqual(t, "", responseBody.Token)
-	}))
+	responseBody := &responses.Login{Token: ""}
+	err := json.Unmarshal(bodyAsBytes, responseBody)
+	assert.NoError(suite.T(), err)
+	assert.NotEqual(suite.T(), "", responseBody.Token)
 }
 
 func (suite *loginTestSuite) TestCannotLoginWithWrongFieldName() {
-	run := suite.UsingTransactions()
-	suite.T().Run("", run(func(t *testing.T) {
-		suite.RegisterForTest("a", "a")
+	suite.RegisterForTest("a", "a")
 
-		rawJSON := `{"logi":"a", "password":"a"}`
-		responseStatusCode := suite.SendPost(
-			"/api/user/login",
-			"application/json",
-			"",
-			bytes.NewBuffer([]byte(rawJSON)),
-		)
+	rawJSON := `{"logi":"a", "password":"a"}`
+	responseStatusCode := suite.SendPost(
+		"/api/user/login",
+		"application/json",
+		"",
+		bytes.NewBuffer([]byte(rawJSON)),
+	)
 
-		assert.Equal(t, http.StatusBadRequest, responseStatusCode)
-	}))
+	assert.Equal(suite.T(), http.StatusBadRequest, responseStatusCode)
 }
 
 func (suite *loginTestSuite) TestCannotLoginWithWrongContentType() {
-	run := suite.UsingTransactions()
+	suite.RegisterForTest("a", "a")
 
-	suite.T().Run("", run(func(t *testing.T) {
-		suite.RegisterForTest("a", "a")
+	rawJSON := `{"login":"a", "password":"a"}`
+	responseStatusCode := suite.SendPost(
+		"/api/user/login",
+		"application",
+		"",
+		bytes.NewBuffer([]byte(rawJSON)),
+	)
 
-		rawJSON := `{"login":"a", "password":"a"}`
-		responseStatusCode := suite.SendPost(
-			"/api/user/login",
-			"application",
-			"",
-			bytes.NewBuffer([]byte(rawJSON)),
-		)
-
-		assert.Equal(t, http.StatusBadRequest, responseStatusCode)
-	}))
+	assert.Equal(suite.T(), http.StatusBadRequest, responseStatusCode)
 }

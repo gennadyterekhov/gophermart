@@ -26,8 +26,6 @@ func Test(t *testing.T) {
 }
 
 func (suite *testSuite) TestCanSendRegisterRequest() {
-	run := suite.UsingTransactions()
-
 	cases := []struct {
 		name        string
 		contentType string
@@ -47,41 +45,35 @@ func (suite *testSuite) TestCanSendRegisterRequest() {
 	}
 
 	for _, tt := range cases {
-		suite.T().Run(tt.name, run(func(t *testing.T) {
-			rawJSON := `{"login":"a", "password":"a"}`
-			responseStatusCode, bodyAsBytes := suite.SendPostAndReturnBody(
-				"/api/user/register",
-				tt.contentType,
-				"",
-				bytes.NewBuffer([]byte(rawJSON)),
-			)
-
-			assert.Equal(t, tt.code, responseStatusCode)
-			if tt.code == http.StatusOK {
-				responseBody := &responses.Register{ID: 0, Token: ""}
-				err := json.Unmarshal(bodyAsBytes, responseBody)
-				assert.NoError(t, err)
-				assert.NotEqual(t, "", responseBody.Token)
-				assert.NotEqual(t, 0, responseBody.Token)
-			}
-		}))
-	}
-}
-
-func (suite *testSuite) Test409IfSameLogin() {
-	run := suite.UsingTransactions()
-
-	suite.T().Run("", run(func(t *testing.T) {
-		suite.RegisterForTest("a", "a")
-
-		rawJSON := `{"login":"a", "password":"b"}`
-		responseStatusCode := suite.SendPost(
+		rawJSON := `{"login":"a", "password":"a"}`
+		responseStatusCode, bodyAsBytes := suite.SendPostAndReturnBody(
 			"/api/user/register",
-			"application/json",
+			tt.contentType,
 			"",
 			bytes.NewBuffer([]byte(rawJSON)),
 		)
 
-		assert.Equal(t, http.StatusConflict, responseStatusCode)
-	}))
+		assert.Equal(suite.T(), tt.code, responseStatusCode)
+		if tt.code == http.StatusOK {
+			responseBody := &responses.Register{ID: 0, Token: ""}
+			err := json.Unmarshal(bodyAsBytes, responseBody)
+			assert.NoError(suite.T(), err)
+			assert.NotEqual(suite.T(), "", responseBody.Token)
+			assert.NotEqual(suite.T(), 0, responseBody.Token)
+		}
+	}
+}
+
+func (suite *testSuite) Test409IfSameLogin() {
+	suite.RegisterForTest("a", "a")
+
+	rawJSON := `{"login":"a", "password":"b"}`
+	responseStatusCode := suite.SendPost(
+		"/api/user/register",
+		"application/json",
+		"",
+		bytes.NewBuffer([]byte(rawJSON)),
+	)
+
+	assert.Equal(suite.T(), http.StatusConflict, responseStatusCode)
 }

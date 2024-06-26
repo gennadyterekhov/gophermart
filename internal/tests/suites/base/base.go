@@ -21,13 +21,7 @@ type CanRegister interface {
 	RegisterForTest(login string, password string) *responses.Register
 }
 
-type UsingTransactions interface {
-	UsingTransactions() traits.TestRunnerWithBeforeAndAfter
-	HasLifecycleMethods
-}
-
 type BaseSuiteInterface interface {
-	UsingTransactions
 	HasLifecycleMethods
 	CanRegister
 	HasRepo
@@ -35,7 +29,7 @@ type BaseSuiteInterface interface {
 
 type BaseSuite struct {
 	suite.Suite
-	traits.CanRegisterAndUsingTransactions
+	traits.CanRegister
 }
 
 func InitBaseSuite[T BaseSuiteInterface](srv T) {

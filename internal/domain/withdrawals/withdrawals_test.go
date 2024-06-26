@@ -34,88 +34,72 @@ func Test(t *testing.T) {
 }
 
 func (suite *testSuite) TestCanGetWithdrawals() {
-	run := suite.UsingTransactions()
+	userDto := suite.RegisterForTest("a", "a")
+	withdrawalNewest, withdrawalMedium, withdrawalOldest := suite.createDifferentWithdrawals(userDto)
 
-	suite.T().Run("", run(func(t *testing.T) {
-		userDto := suite.RegisterForTest("a", "a")
-		withdrawalNewest, withdrawalMedium, withdrawalOldest := suite.createDifferentWithdrawals(userDto)
+	ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
+	all, err := suite.Service.GetAll(ctx)
+	assert.NoError(suite.T(), err)
 
-		ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
-		all, err := suite.Service.GetAll(ctx)
-		assert.NoError(t, err)
-
-		assert.Equal(t, 3, len(*all))
-		assert.Equal(t, withdrawalOldest.ID, (*all)[0].ID)
-		assert.Equal(t, withdrawalMedium.ID, (*all)[1].ID)
-		assert.Equal(t, withdrawalNewest.ID, (*all)[2].ID)
-	}))
+	assert.Equal(suite.T(), 3, len(*all))
+	assert.Equal(suite.T(), withdrawalOldest.ID, (*all)[0].ID)
+	assert.Equal(suite.T(), withdrawalMedium.ID, (*all)[1].ID)
+	assert.Equal(suite.T(), withdrawalNewest.ID, (*all)[2].ID)
 }
 
 func (suite *testSuite) TestNoContentReturnsError() {
-	run := suite.UsingTransactions()
-
-	suite.T().Run("", run(func(t *testing.T) {
-		userDto := suite.RegisterForTest("a", "a")
-		ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
-		_, err := suite.Service.GetAll(ctx)
-		assert.Equal(t, err.Error(), ErrorNoContent)
-	}))
+	userDto := suite.RegisterForTest("a", "a")
+	ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
+	_, err := suite.Service.GetAll(ctx)
+	assert.Equal(suite.T(), err.Error(), ErrorNoContent)
 }
 
 func (suite *testSuite) TestCanCreateWithdrawals() {
-	run := suite.UsingTransactions()
+	userDto := suite.RegisterForTest("a", "a")
+	var accrual int64 = 101
+	_, err := suite.Service.Repository.AddOrder(
+		context.Background(),
+		"a",
+		userDto.ID,
+		"",
+		&accrual,
+		time.Time{},
+	)
+	require.NoError(suite.T(), err)
 
-	suite.T().Run("", run(func(t *testing.T) {
-		userDto := suite.RegisterForTest("a", "a")
-		var accrual int64 = 101
-		_, err := suite.Service.Repository.AddOrder(
-			context.Background(),
-			"a",
-			userDto.ID,
-			"",
-			&accrual,
-			time.Time{},
-		)
-		require.NoError(t, err)
+	ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
+	reqDto := &requests.Withdrawals{
+		Order: "a",
+		Sum:   1,
+	}
+	_, err = suite.Service.Create(ctx, reqDto)
+	assert.NoError(suite.T(), err)
 
-		ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
-		reqDto := &requests.Withdrawals{
-			Order: "a",
-			Sum:   1,
-		}
-		_, err = suite.Service.Create(ctx, reqDto)
-		assert.NoError(t, err)
-
-		bal, _ := suite.Service.BalanceService.GetBalance(context.Background(), userDto.ID)
-		assert.NoError(t, err)
-		assert.Equal(t, int64(1), bal)
-	}))
+	bal, _ := suite.Service.BalanceService.GetBalance(context.Background(), userDto.ID)
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), int64(1), bal)
 }
 
 func (suite *testSuite) TestCannotCreateWithdrawalsIfNotEnoughBalance() {
-	run := suite.UsingTransactions()
+	userDto := suite.RegisterForTest("a", "a")
+	var accrual int64 = 5
+	_, err := suite.Service.Repository.AddOrder(
+		context.Background(),
+		"a",
+		userDto.ID,
+		"",
+		&accrual,
+		time.Time{},
+	)
+	require.NoError(suite.T(), err)
 
-	suite.T().Run("", run(func(t *testing.T) {
-		userDto := suite.RegisterForTest("a", "a")
-		var accrual int64 = 5
-		_, err := suite.Service.Repository.AddOrder(
-			context.Background(),
-			"a",
-			userDto.ID,
-			"",
-			&accrual,
-			time.Time{},
-		)
-		require.NoError(t, err)
-
-		ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
-		reqDto := &requests.Withdrawals{
-			Order: "a",
-			Sum:   10,
-		}
-		_, err = suite.Service.Create(ctx, reqDto)
-		assert.Equal(t, ErrorInsufficientFunds, err.Error())
-	}))
+	ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
+	reqDto := &requests.Withdrawals{
+		Order: "a",
+		Sum:   10,
+	}
+	_, err = suite.Service.Create(ctx, reqDto)
+	assert.Equal(suite.T(), ErrorInsufficientFunds, err.Error())
 }
 
 func (suite *testSuite) createDifferentWithdrawals(

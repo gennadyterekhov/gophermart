@@ -34,144 +34,121 @@ func TestOrders(t *testing.T) {
 }
 
 func (suite *ordersTestSuite) TestCanSendOrdersRequest() {
-	run := suite.UsingTransactions()
+	var err error
+	regDto := suite.RegisterForTest("a", "a")
+	_, err = suite.Repository.AddOrder(
+		context.Background(),
+		"1",
+		regDto.ID,
+		"st1", nil,
+		time.Time{},
+	)
+	assert.NoError(suite.T(), err)
 
-	suite.T().Run("", run(func(t *testing.T) {
-		var err error
-		regDto := suite.RegisterForTest("a", "a")
-		_, err = suite.Repository.AddOrder(
-			context.Background(),
-			"1",
-			regDto.ID,
-			"st1", nil,
-			time.Time{},
-		)
-		assert.NoError(t, err)
+	var tenDollarsOrThousandCents int64 = 1000
+	_, err = suite.Repository.AddOrder(
+		context.Background(),
+		"2",
+		regDto.ID,
+		"st2", &tenDollarsOrThousandCents,
+		time.Time{}.AddDate(1, 0, 0),
+	)
+	assert.NoError(suite.T(), err)
 
-		var tenDollarsOrThousandCents int64 = 1000
-		_, err = suite.Repository.AddOrder(
-			context.Background(),
-			"2",
-			regDto.ID,
-			"st2", &tenDollarsOrThousandCents,
-			time.Time{}.AddDate(1, 0, 0),
-		)
-		assert.NoError(t, err)
+	responseStatusCode, bodyAsBytes := suite.SendGet(
+		"/api/user/orders",
+		regDto.Token,
+	)
 
-		responseStatusCode, bodyAsBytes := suite.SendGet(
-			"/api/user/orders",
-			regDto.Token,
-		)
+	require.Equal(suite.T(), http.StatusOK, responseStatusCode)
+	responseBody := make([]order.OrderFloats, 0)
 
-		require.Equal(t, http.StatusOK, responseStatusCode)
-		responseBody := make([]order.OrderFloats, 0)
-
-		err = json.Unmarshal(bodyAsBytes, &responseBody)
-		assert.NoError(t, err)
-		require.Equal(t, 2, len(responseBody))
-		assert.Nil(t, (responseBody)[0].Accrual)
-		assert.Equal(t, float64(10), *(responseBody)[1].Accrual)
-	}))
+	err = json.Unmarshal(bodyAsBytes, &responseBody)
+	assert.NoError(suite.T(), err)
+	require.Equal(suite.T(), 2, len(responseBody))
+	assert.Nil(suite.T(), (responseBody)[0].Accrual)
+	assert.Equal(suite.T(), float64(10), *(responseBody)[1].Accrual)
 }
 
 func (suite *ordersTestSuite) TestOrders204IfNoContent() {
-	run := suite.UsingTransactions()
-	suite.T().Run("", run(func(t *testing.T) {
-		regDto := suite.RegisterForTest("a", "a")
+	regDto := suite.RegisterForTest("a", "a")
 
-		responseStatusCode, _ := suite.SendGet(
-			"/api/user/orders",
-			regDto.Token,
-		)
+	responseStatusCode, _ := suite.SendGet(
+		"/api/user/orders",
+		regDto.Token,
+	)
 
-		assert.Equal(t, http.StatusNoContent, responseStatusCode)
-	}))
+	assert.Equal(suite.T(), http.StatusNoContent, responseStatusCode)
 }
 
 func (suite *ordersTestSuite) TestOrders401IfNoToken() {
-	run := suite.UsingTransactions()
+	suite.RegisterForTest("a", "a")
 
-	suite.T().Run("", run(func(t *testing.T) {
-		suite.RegisterForTest("a", "a")
+	responseStatusCode, _ := suite.SendGet(
+		"/api/user/orders",
+		"",
+	)
 
-		responseStatusCode, _ := suite.SendGet(
-			"/api/user/orders",
-			"",
-		)
-
-		assert.Equal(t, http.StatusUnauthorized, responseStatusCode)
-	}))
+	assert.Equal(suite.T(), http.StatusUnauthorized, responseStatusCode)
 }
 
 func (suite *ordersTestSuite) Test200IfAlreadyUploaded() {
-	run := suite.UsingTransactions()
+	var err error
+	regDto := suite.RegisterForTest("a", "a")
+	_, err = suite.Repository.AddOrder(
+		context.Background(),
+		"12345678903",
+		regDto.ID,
+		"st1", nil,
+		time.Time{},
+	)
+	assert.NoError(suite.T(), err)
 
-	suite.T().Run("", run(func(t *testing.T) {
-		var err error
-		regDto := suite.RegisterForTest("a", "a")
-		_, err = suite.Repository.AddOrder(
-			context.Background(),
-			"12345678903",
-			regDto.ID,
-			"st1", nil,
-			time.Time{},
-		)
-		assert.NoError(t, err)
+	responseStatusCode := suite.SendPost(
+		"/api/user/orders",
+		"text/plain",
+		regDto.Token,
+		bytes.NewBuffer([]byte("12345678903")),
+	)
 
-		responseStatusCode := suite.SendPost(
-			"/api/user/orders",
-			"text/plain",
-			regDto.Token,
-			bytes.NewBuffer([]byte("12345678903")),
-		)
-
-		require.Equal(t, http.StatusOK, responseStatusCode)
-	}))
+	require.Equal(suite.T(), http.StatusOK, responseStatusCode)
 }
 
 func (suite *ordersTestSuite) Test409IfAlreadyUploadedByAnotherUser() {
-	run := suite.UsingTransactions()
+	var err error
+	anotherUser := suite.RegisterForTest("another", "a")
 
-	suite.T().Run("", run(func(t *testing.T) {
-		var err error
-		anotherUser := suite.RegisterForTest("another", "a")
+	_, err = suite.Repository.AddOrder(
+		context.Background(),
+		"12345678903",
+		anotherUser.ID,
+		"st1", nil,
+		time.Time{},
+	)
+	assert.NoError(suite.T(), err)
 
-		_, err = suite.Repository.AddOrder(
-			context.Background(),
-			"12345678903",
-			anotherUser.ID,
-			"st1", nil,
-			time.Time{},
-		)
-		assert.NoError(t, err)
+	regDto := suite.RegisterForTest("a", "a")
+	responseStatusCode := suite.SendPost(
+		"/api/user/orders",
+		"text/plain",
+		regDto.Token,
+		bytes.NewBuffer([]byte("12345678903")),
+	)
 
-		regDto := suite.RegisterForTest("a", "a")
-		responseStatusCode := suite.SendPost(
-			"/api/user/orders",
-			"text/plain",
-			regDto.Token,
-			bytes.NewBuffer([]byte("12345678903")),
-		)
-
-		require.Equal(t, http.StatusConflict, responseStatusCode)
-	}))
+	require.Equal(suite.T(), http.StatusConflict, responseStatusCode)
 }
 
 func (suite *ordersTestSuite) Test422IfInvalidNumber() {
-	run := suite.UsingTransactions()
+	var _ error
+	regDto := suite.RegisterForTest("a", "a")
 
-	suite.T().Run("", run(func(t *testing.T) {
-		var _ error
-		regDto := suite.RegisterForTest("a", "a")
+	responseStatusCode := suite.SendPost(
 
-		responseStatusCode := suite.SendPost(
+		"/api/user/orders",
+		"text/plain",
+		regDto.Token,
+		bytes.NewBuffer([]byte("1234567890")),
+	)
 
-			"/api/user/orders",
-			"text/plain",
-			regDto.Token,
-			bytes.NewBuffer([]byte("1234567890")),
-		)
-
-		require.Equal(t, http.StatusUnprocessableEntity, responseStatusCode)
-	}))
+	require.Equal(suite.T(), http.StatusUnprocessableEntity, responseStatusCode)
 }
