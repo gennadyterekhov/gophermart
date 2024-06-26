@@ -37,7 +37,7 @@ func (suite *luhnTestSuite) TestLuhnOk() {
 			bytes.NewBuffer([]byte(rawJSON)),
 		)
 
-		assert.Equal(t, http.StatusOK, responseStatusCode)
+		assert.Equal(suite.T(), http.StatusOK, responseStatusCode)
 	})
 }
 
@@ -50,7 +50,7 @@ func (suite *luhnTestSuite) TestLuhnOkWhenTextPlain() {
 			bytes.NewBuffer([]byte("12345678903")),
 		)
 
-		assert.Equal(t, http.StatusOK, responseStatusCode)
+		assert.Equal(suite.T(), http.StatusOK, responseStatusCode)
 	})
 }
 
@@ -63,7 +63,7 @@ func (suite *luhnTestSuite) Test422WhenNoOrderInBody() {
 			bytes.NewBuffer([]byte(rawJSON)),
 		)
 
-		assert.Equal(t, http.StatusUnprocessableEntity, responseStatusCode)
+		assert.Equal(suite.T(), http.StatusUnprocessableEntity, responseStatusCode)
 	})
 }
 
@@ -76,7 +76,7 @@ func (suite *luhnTestSuite) Test422WhenIncorrectNumber() {
 			bytes.NewBuffer([]byte(rawJSON)),
 		)
 
-		assert.Equal(t, http.StatusUnprocessableEntity, responseStatusCode)
+		assert.Equal(suite.T(), http.StatusUnprocessableEntity, responseStatusCode)
 	})
 	suite.T().Run("", func(t *testing.T) {
 		rawJSON := `{"order":"441712a456789113"}`
@@ -86,6 +86,6 @@ func (suite *luhnTestSuite) Test422WhenIncorrectNumber() {
 			bytes.NewBuffer([]byte(rawJSON)),
 		)
 
-		assert.Equal(t, http.StatusUnprocessableEntity, responseStatusCode)
+		assert.Equal(suite.T(), http.StatusUnprocessableEntity, responseStatusCode)
 	})
 }

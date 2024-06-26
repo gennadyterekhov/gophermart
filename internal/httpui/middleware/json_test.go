@@ -32,14 +32,14 @@ func (suite *jsonTestSuite) TestCanSendIfJson() {
 	suite.T().Run("", func(t *testing.T) {
 		path := "/json"
 		req, err := http.NewRequest(http.MethodPost, suite.Server.URL+path, nil)
-		require.NoError(t, err)
+		require.NoError(suite.T(), err)
 		req.Header.Set("Content-Type", "application/json")
 
 		response, err := suite.Server.Client().Do(req)
-		require.NoError(t, err)
+		require.NoError(suite.T(), err)
 		response.Body.Close()
 
-		assert.Equal(t, http.StatusOK, response.StatusCode)
+		assert.Equal(suite.T(), http.StatusOK, response.StatusCode)
 	})
 }
 
@@ -47,12 +47,12 @@ func (suite *jsonTestSuite) Test400IfNotJson() {
 	suite.T().Run("", func(t *testing.T) {
 		path := "/json"
 		req, err := http.NewRequest(http.MethodPost, suite.Server.URL+path, nil)
-		require.NoError(t, err)
+		require.NoError(suite.T(), err)
 
 		response, err := suite.Server.Client().Do(req)
-		require.NoError(t, err)
+		require.NoError(suite.T(), err)
 		response.Body.Close()
 
-		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+		assert.Equal(suite.T(), http.StatusBadRequest, response.StatusCode)
 	})
 }

@@ -117,19 +117,15 @@ func Test(t *testing.T) {
 }
 
 func (suite *testSuite) Test202IfUploadedFirstTime() {
-	run := suite.UsingTransactions()
+	var _ error
+	regDto := suite.RegisterForTest("a", "a")
 
-	suite.T().Run("", run(func(t *testing.T) {
-		var _ error
-		regDto := suite.RegisterForTest("a", "a")
+	responseStatusCode := suite.SendPost(
+		"/api/user/orders",
+		"text/plain",
+		regDto.Token,
+		bytes.NewBuffer([]byte("12345678903")),
+	)
 
-		responseStatusCode := suite.SendPost(
-			"/api/user/orders",
-			"text/plain",
-			regDto.Token,
-			bytes.NewBuffer([]byte("12345678903")),
-		)
-
-		require.Equal(t, http.StatusAccepted, responseStatusCode)
-	}))
+	require.Equal(suite.T(), http.StatusAccepted, responseStatusCode)
 }

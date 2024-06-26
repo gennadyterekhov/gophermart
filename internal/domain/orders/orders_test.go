@@ -33,33 +33,25 @@ func TestDomainOrders(t *testing.T) {
 }
 
 func (suite *testSuite) TestCanGetOrders() {
-	run := suite.UsingTransactions()
+	userDto := suite.RegisterForTest("a", "a")
+	withdrawalNewest, withdrawalMedium, withdrawalOldest := suite.createDifferentOrders(userDto)
 
-	suite.T().Run("", run(func(t *testing.T) {
-		userDto := suite.RegisterForTest("a", "a")
-		withdrawalNewest, withdrawalMedium, withdrawalOldest := suite.createDifferentOrders(userDto)
+	ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
+	all, err := suite.Service.GetAll(ctx)
+	assert.NoError(suite.T(), err)
 
-		ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
-		all, err := suite.Service.GetAll(ctx)
-		assert.NoError(t, err)
-
-		assert.Equal(t, 3, len(*all))
-		assert.Equal(t, withdrawalOldest.Number, (*all)[0].Number)
-		assert.Equal(t, withdrawalMedium.Number, (*all)[1].Number)
-		assert.Equal(t, withdrawalNewest.Number, (*all)[2].Number)
-	}))
+	assert.Equal(suite.T(), 3, len(*all))
+	assert.Equal(suite.T(), withdrawalOldest.Number, (*all)[0].Number)
+	assert.Equal(suite.T(), withdrawalMedium.Number, (*all)[1].Number)
+	assert.Equal(suite.T(), withdrawalNewest.Number, (*all)[2].Number)
 }
 
 func (suite *testSuite) TestNoContentReturnsError() {
-	run := suite.UsingTransactions()
-
-	suite.T().Run("", run(func(t *testing.T) {
-		userDto := suite.RegisterForTest("a", "a")
-		ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
-		_, err := suite.Service.GetAll(ctx)
-		assert.Error(t, err)
-		assert.Equal(suite.T(), err.Error(), ErrorNoContent)
-	}))
+	userDto := suite.RegisterForTest("a", "a")
+	ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
+	_, err := suite.Service.GetAll(ctx)
+	assert.Error(suite.T(), err)
+	assert.Equal(suite.T(), err.Error(), ErrorNoContent)
 }
 
 func (suite *testSuite) TestCanCreateOrder() {

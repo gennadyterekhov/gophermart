@@ -120,26 +120,23 @@ func Test(t *testing.T) {
 }
 
 func (suite *testSuite) TestCanGetOrderStatus() {
-	run := suite.UsingTransactions()
-	suite.T().Run("", run(func(t *testing.T) {
-		userDto := suite.RegisterForTest("b", "a")
-		number := luhn.Generate(1)
-		suite.createOrder(userDto, number)
+	userDto := suite.RegisterForTest("b", "a")
+	number := luhn.Generate(1)
+	suite.createOrder(userDto, number)
 
-		httpc := resty.NewWithClient(&http.Client{
-			Transport: &http.Transport{
-				DisableCompression: true,
-			},
-		}).SetBaseURL(suite.serverAddress)
-		suite.registerOrderInAccrual(httpc, number)
-		time.Sleep(time.Millisecond * 20)
+	httpc := resty.NewWithClient(&http.Client{
+		Transport: &http.Transport{
+			DisableCompression: true,
+		},
+	}).SetBaseURL(suite.serverAddress)
+	suite.registerOrderInAccrual(httpc, number)
+	time.Sleep(time.Millisecond * 20)
 
-		req := httpc.R()
-		resp, err := req.Get(fmt.Sprintf("/api/orders/%v", number))
-		assert.NoError(t, err)
-		logger.CustomLogger.Debugln("resp.StatusCode()", resp.StatusCode())
-		assert.Equal(t, http.StatusOK, resp.StatusCode())
-	}))
+	req := httpc.R()
+	resp, err := req.Get(fmt.Sprintf("/api/orders/%v", number))
+	assert.NoError(suite.T(), err)
+	logger.CustomLogger.Debugln("resp.StatusCode()", resp.StatusCode())
+	assert.Equal(suite.T(), http.StatusOK, resp.StatusCode())
 }
 
 func (suite *testSuite) TestTooManyRequests() {
@@ -149,34 +146,28 @@ func (suite *testSuite) TestTooManyRequests() {
 func (suite *testSuite) TestNoContent() {
 	suite.T().Skipf("cannot test in suite because it can run after registration and will fail")
 
-	run := suite.UsingTransactions()
-	suite.T().Run("", run(func(t *testing.T) {
-		userDto := suite.RegisterForTest("a", "a")
-		number := luhn.Generate(1)
-		suite.createOrder(userDto, number)
+	userDto := suite.RegisterForTest("a", "a")
+	number := luhn.Generate(1)
+	suite.createOrder(userDto, number)
 
-		httpc := resty.NewWithClient(&http.Client{
-			Transport: &http.Transport{
-				DisableCompression: true,
-			},
-		}).SetBaseURL(suite.serverAddress)
+	httpc := resty.NewWithClient(&http.Client{
+		Transport: &http.Transport{
+			DisableCompression: true,
+		},
+	}).SetBaseURL(suite.serverAddress)
 
-		req := httpc.R()
-		resp, err := req.Get(fmt.Sprintf("/api/orders/%v", number))
-		assert.NoError(t, err)
-		logger.CustomLogger.Debugln("resp.StatusCode()", resp.StatusCode())
-		assert.Equal(t, http.StatusNoContent, resp.StatusCode())
-	}))
+	req := httpc.R()
+	resp, err := req.Get(fmt.Sprintf("/api/orders/%v", number))
+	assert.NoError(suite.T(), err)
+	logger.CustomLogger.Debugln("resp.StatusCode()", resp.StatusCode())
+	assert.Equal(suite.T(), http.StatusNoContent, resp.StatusCode())
 }
 
 func (suite *testSuite) TestInternalServerError() {
 	suite.T().Skipf("cannot test")
 }
 
-func (suite *testSuite) createOrder(
-	userDto *responses.Register,
-	number string,
-) *order.Order {
+func (suite *testSuite) createOrder(userDto *responses.Register, number string) *order.Order {
 	var ten int64 = 10
 	orderNewest, err := suite.Repository.AddOrder(
 		context.Background(),
@@ -191,10 +182,7 @@ func (suite *testSuite) createOrder(
 	return orderNewest
 }
 
-func (suite *testSuite) registerOrderInAccrual(
-	httpc *resty.Client,
-	number string,
-) {
+func (suite *testSuite) registerOrderInAccrual(httpc *resty.Client, number string) {
 	o := []byte(`
 			{
 				"order": "` + number + `",

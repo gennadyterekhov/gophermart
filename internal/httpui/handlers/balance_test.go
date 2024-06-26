@@ -29,41 +29,34 @@ func TestBalance(t *testing.T) {
 }
 
 func (suite *balanceTestSuite) TestCanSendBalanceRequest() {
-	run := suite.UsingTransactions()
-	suite.T().Run("", run(func(t *testing.T) {
-		regDto := suite.RegisterForTest("a", "a")
-		_, err := suite.Repository.AddWithdrawal(context.Background(), regDto.ID, "", 100, time.Time{})
-		assert.NoError(t, err)
+	regDto := suite.RegisterForTest("a", "a")
+	_, err := suite.Repository.AddWithdrawal(context.Background(), regDto.ID, "", 100, time.Time{})
+	assert.NoError(suite.T(), err)
 
-		var startBalance int64 = 1000 // cents => $10
-		_, err = suite.Repository.AddOrder(context.Background(), "", regDto.ID, "", &startBalance, time.Time{})
-		assert.NoError(t, err)
+	var startBalance int64 = 1000 // cents => $10
+	_, err = suite.Repository.AddOrder(context.Background(), "", regDto.ID, "", &startBalance, time.Time{})
+	assert.NoError(suite.T(), err)
 
-		responseStatusCode, bodyAsBytes := suite.SendGet(
-			"/api/user/balance",
-			regDto.Token,
-		)
+	responseStatusCode, bodyAsBytes := suite.SendGet(
+		"/api/user/balance",
+		regDto.Token,
+	)
 
-		require.Equal(t, http.StatusOK, responseStatusCode)
-		responseBody := &responses.BalanceExternal{}
-		err = json.Unmarshal(bodyAsBytes, responseBody)
-		assert.NoError(t, err)
-		require.Equal(t, float64(1), responseBody.Withdrawn)
-		assert.Equal(t, float64(9), responseBody.Current)
-	}))
+	require.Equal(suite.T(), http.StatusOK, responseStatusCode)
+	responseBody := &responses.BalanceExternal{}
+	err = json.Unmarshal(bodyAsBytes, responseBody)
+	assert.NoError(suite.T(), err)
+	require.Equal(suite.T(), float64(1), responseBody.Withdrawn)
+	assert.Equal(suite.T(), float64(9), responseBody.Current)
 }
 
 func (suite *balanceTestSuite) TestBalance401IfNoToken() {
-	run := suite.UsingTransactions()
+	suite.RegisterForTest("a", "a")
 
-	suite.T().Run("", run(func(t *testing.T) {
-		suite.RegisterForTest("a", "a")
+	responseStatusCode, _ := suite.SendGet(
+		"/api/user/balance",
+		"",
+	)
 
-		responseStatusCode, _ := suite.SendGet(
-			"/api/user/balance",
-			"",
-		)
-
-		assert.Equal(t, http.StatusUnauthorized, responseStatusCode)
-	}))
+	assert.Equal(suite.T(), http.StatusUnauthorized, responseStatusCode)
 }

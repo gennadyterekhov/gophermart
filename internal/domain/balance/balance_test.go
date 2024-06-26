@@ -30,22 +30,18 @@ func Test(t *testing.T) {
 }
 
 func (suite *testSuite) TestCanGetBalance() {
-	run := suite.UsingTransactions()
+	userDto := suite.RegisterForTest("a", "a")
+	suite.createDifferentWithdrawals(userDto)
+	var startBalance int64 = 10
+	_, err := suite.Service.Repository.AddOrder(context.Background(), "", userDto.ID, "", &startBalance, time.Time{})
+	assert.NoError(suite.T(), err)
 
-	suite.T().Run("", run(func(t *testing.T) {
-		userDto := suite.RegisterForTest("a", "a")
-		suite.createDifferentWithdrawals(userDto)
-		var startBalance int64 = 10
-		_, err := suite.Service.Repository.AddOrder(context.Background(), "", userDto.ID, "", &startBalance, time.Time{})
-		assert.NoError(t, err)
+	ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
+	resDto, err := suite.Service.GetBalanceResponse(ctx)
+	assert.NoError(suite.T(), err)
 
-		ctx := context.WithValue(context.Background(), middleware.ContextUserIDKey, userDto.ID)
-		resDto, err := suite.Service.GetBalanceResponse(ctx)
-		assert.NoError(t, err)
-
-		assert.Equal(t, int64(10-(1+2+3)), resDto.Current) // TODO fix currency float
-		assert.Equal(t, int64(1+2+3), resDto.Withdrawn)
-	}))
+	assert.Equal(suite.T(), int64(10-(1+2+3)), resDto.Current) // TODO fix currency float
+	assert.Equal(suite.T(), int64(1+2+3), resDto.Withdrawn)
 }
 
 func (suite *testSuite) createDifferentWithdrawals(

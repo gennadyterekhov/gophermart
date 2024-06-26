@@ -25,14 +25,14 @@ func (suite *orderRepositoryTest) SetupSuite() {
 func (suite *orderRepositoryTest) TestCanGetOrdersFromRepo() {
 	suite.T().Run("", func(t *testing.T) {
 		regDto := suite.RegisterForTest("a", "a")
-		orderNewest, orderMedium, orderOldest := createDifferentOrders(t, suite.Repository, regDto)
+		orderNewest, orderMedium, orderOldest := createDifferentOrders(suite.T(), suite.Repository, regDto)
 
 		orders, err := suite.Repository.GetAllOrdersForUser(context.Background(), regDto.ID)
-		assert.NoError(t, err)
-		assert.Equal(t, 3, len(orders))
-		assert.Equal(t, orderOldest.Number, orders[0].Number)
-		assert.Equal(t, orderMedium.Number, orders[1].Number)
-		assert.Equal(t, orderNewest.Number, orders[2].Number)
+		assert.NoError(suite.T(), err)
+		assert.Equal(suite.T(), 3, len(orders))
+		assert.Equal(suite.T(), orderOldest.Number, orders[0].Number)
+		assert.Equal(suite.T(), orderMedium.Number, orders[1].Number)
+		assert.Equal(suite.T(), orderNewest.Number, orders[2].Number)
 	})
 }
 
@@ -40,7 +40,7 @@ func (suite *orderRepositoryTest) TestCanInsertOrder() {
 	suite.T().Run("", func(t *testing.T) {
 		regDto := suite.RegisterForTest("a", "a")
 		_, err := suite.Repository.AddOrder(context.Background(), "1", regDto.ID, "", nil, time.Time{})
-		assert.NoError(t, err)
+		assert.NoError(suite.T(), err)
 	})
 }
 
