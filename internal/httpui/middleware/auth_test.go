@@ -32,6 +32,10 @@ func (suite *authTestSuite) SetupSuite() {
 	)
 }
 
+func (suite *authTestSuite) SetupTest() {
+	suite.Repository.Clear()
+}
+
 func TestAuth(t *testing.T) {
 	suite.Run(t, new(authTestSuite))
 }

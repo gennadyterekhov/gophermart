@@ -24,12 +24,14 @@ type RepositoryMock struct {
 func (repo *RepositoryMock) Clear() {
 	repo.users = make(map[int64]*models.User)
 	repo.orders = make(map[string]*order.Order)
+	repo.withdrawals = make(map[int64]*models.Withdrawal)
 }
 
 func NewRepositoryMock() *RepositoryMock {
 	return &RepositoryMock{
-		users:  make(map[int64]*models.User),
-		orders: make(map[string]*order.Order),
+		users:       make(map[int64]*models.User),
+		orders:      make(map[string]*order.Order),
+		withdrawals: make(map[int64]*models.Withdrawal),
 	}
 }
 
@@ -156,7 +158,9 @@ func (repo *RepositoryMock) GetAllWithdrawalsForUser(ctx context.Context, userID
 			wdrs = append(wdrs, *v)
 		}
 	}
-
+	sort.Slice(wdrs, func(i, j int) bool {
+		return wdrs[i].ProcessedAt.Before(wdrs[j].ProcessedAt)
+	})
 	return wdrs, nil
 }
 
