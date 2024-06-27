@@ -19,7 +19,7 @@ type testSuite struct {
 	with_server.BaseSuiteWithServer
 }
 
-func Test(t *testing.T) {
+func TestRegister(t *testing.T) {
 	suiteInstance := &testSuite{}
 	with_server.InitBaseSuiteWithServer(suiteInstance)
 	suite.Run(t, suiteInstance)

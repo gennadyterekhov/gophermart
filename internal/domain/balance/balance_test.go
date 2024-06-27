@@ -25,7 +25,7 @@ func (suite *testSuite) SetupSuite() {
 	suite.Service = NewService(suite.GetRepository())
 }
 
-func Test(t *testing.T) {
+func TestBalance(t *testing.T) {
 	suite.Run(t, new(testSuite))
 }
 

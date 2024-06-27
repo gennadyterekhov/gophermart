@@ -29,7 +29,7 @@ func (suite *testSuite) SetupSuite() {
 	suite.Service = NewService(suite.GetRepository(), balance.NewService(suite.GetRepository()))
 }
 
-func Test(t *testing.T) {
+func TestWithdrawalsDomain(t *testing.T) {
 	suite.Run(t, new(testSuite))
 }
 

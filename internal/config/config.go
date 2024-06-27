@@ -19,27 +19,43 @@ func NewConfig() *Config {
 }
 
 func getConfig() *Config {
-	addressFlag := flag.String(
-		"a",
-		"localhost:8080",
-		"[address] Net address host:port without protocol",
-	)
-	DBDsnFlag := flag.String(
-		"d",
-		"",
-		"[db dsn] format: `host=%s user=%s password=%s dbname=%s sslmode=%s`",
-	)
-	accrualSystemAddressFlag := flag.String(
-		"r",
-		"",
-		"[accRual_system_address] ",
-	)
+	var addressFlag *string
+	var DBDsnFlag *string
+	var accrualSystemAddressFlag *string
+
+	if flag.Lookup("a") == nil {
+		addressFlag = flag.String(
+			"a",
+			"localhost:8080",
+			"[address] Net address host:port without protocol",
+		)
+	}
+	if flag.Lookup("d") == nil {
+		DBDsnFlag = flag.String(
+			"d",
+			"",
+			"[db dsn] format: `host=%s user=%s password=%s dbname=%s sslmode=%s`",
+		)
+	}
+	if flag.Lookup("r") == nil {
+		accrualSystemAddressFlag = flag.String(
+			"r",
+			"",
+			"[accRual_system_address] ",
+		)
+	}
 
 	flag.Parse()
-	flags := Config{
-		Addr:       *addressFlag,
-		DBDsn:      *DBDsnFlag,
-		AccrualURL: *accrualSystemAddressFlag,
+	flags := Config{}
+
+	if addressFlag != nil {
+		flags.Addr = *addressFlag
+	}
+	if DBDsnFlag != nil {
+		flags.DBDsn = *DBDsnFlag
+	}
+	if accrualSystemAddressFlag != nil {
+		flags.AccrualURL = *accrualSystemAddressFlag
 	}
 	logger.CustomLogger.Debugln("flags before envs", flags.Addr, flags.DBDsn, flags.AccrualURL)
 	overwriteWithEnv(&flags)

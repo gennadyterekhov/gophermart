@@ -44,8 +44,8 @@ type testSuite struct {
 func (suite *testSuite) SetupSuite() {
 	base.InitBaseSuite(suite)
 
-	suite.serverAddress = "http://localhost"
-	suite.serverPort = "8089"
+	suite.serverAddress = "http://localhost:8080"
+	suite.serverPort = "8080"
 	suite.serverProcess = nil
 	suite.serverArgs = []string{""}
 	suite.envs = []string{""}
@@ -73,7 +73,6 @@ func (suite *testSuite) serverUp(ctx context.Context, envs, args []string, port 
 
 	err = suite.serverProcess.WaitPort(ctx, "tcp", port)
 	if err != nil {
-		logger.CustomLogger.Debugln(err.Error()) // context deadline exceeded
 		suite.T().Errorf("Не удалось дождаться пока порт %s станет доступен для запроса: %s", port, err)
 		return
 	}
@@ -115,7 +114,7 @@ func (suite *testSuite) serverShutdown() {
 	}
 }
 
-func Test(t *testing.T) {
+func TestClient(t *testing.T) {
 	suite.Run(t, new(testSuite))
 }
 
