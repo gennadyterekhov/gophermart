@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gennadyterekhov/gophermart/internal/tests/suites/with_server"
+	"github.com/gennadyterekhov/gophermart/internal/tests/suites/server"
 
 	"github.com/stretchr/testify/suite"
 
@@ -19,12 +19,12 @@ import (
 )
 
 type ordersTestSuite struct {
-	with_server.BaseSuiteWithServer
+	server.BaseSuiteWithServer
 }
 
 func newSuite() *ordersTestSuite {
 	suiteInstance := &ordersTestSuite{}
-	with_server.InitBaseSuiteWithServer(suiteInstance)
+	server.InitBaseSuiteWithServer(suiteInstance)
 
 	return suiteInstance
 }

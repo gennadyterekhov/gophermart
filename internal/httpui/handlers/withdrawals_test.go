@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gennadyterekhov/gophermart/internal/tests/suites/with_server"
+	"github.com/gennadyterekhov/gophermart/internal/tests/suites/server"
 
 	"github.com/stretchr/testify/suite"
 
@@ -21,12 +21,12 @@ import (
 )
 
 type withdrawalsTestSuite struct {
-	with_server.BaseSuiteWithServer
+	server.BaseSuiteWithServer
 }
 
 func TestWithdrawals(t *testing.T) {
 	suiteInstance := &withdrawalsTestSuite{}
-	with_server.InitBaseSuiteWithServer(suiteInstance)
+	server.InitBaseSuiteWithServer(suiteInstance)
 
 	suite.Run(t, suiteInstance)
 }
