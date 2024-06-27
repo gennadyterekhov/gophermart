@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
+
 	"github.com/gennadyterekhov/gophermart/internal/repositories"
 
 	"github.com/go-resty/resty/v2"
@@ -14,6 +16,7 @@ import (
 
 type AccrualClientResponse struct {
 	CorrectResponse         *CorrectResponse
+	NoContentResponse       *NoContentResponse
 	TooManyRequestsResponse *TooManyRequestsResponse
 }
 
@@ -21,6 +24,10 @@ type CorrectResponse struct {
 	Order   string   `json:"order"`
 	Status  string   `json:"status"`
 	Accrual *float64 `json:"accrual,omitempty"`
+}
+
+type NoContentResponse struct {
+	Status string `json:"status"`
 }
 
 type TooManyRequestsResponse struct {
@@ -76,7 +83,12 @@ func (ac *AccrualClient) GetStatus(number string) (*AccrualClientResponse, error
 		return responseDto, nil
 	}
 	if statusCode == http.StatusNoContent {
-		return responseDto, fmt.Errorf(ErrorNoContent)
+		correctResponse, err := processNoContentResponse(response)
+		if err != nil {
+			return nil, err
+		}
+		responseDto.NoContentResponse = correctResponse
+		return responseDto, nil // fmt.Errorf(ErrorNoContent)
 	}
 	if statusCode == http.StatusInternalServerError {
 		return responseDto, fmt.Errorf(ErrorInternal)
@@ -118,6 +130,13 @@ func processSuccessfulResponse(response *resty.Response) (*CorrectResponse, erro
 	if err != nil {
 		return nil, err
 	}
+
+	return responseDto, nil
+}
+
+func processNoContentResponse(response *resty.Response) (*NoContentResponse, error) {
+	responseDto := &NoContentResponse{}
+	responseDto.Status = order.New
 
 	return responseDto, nil
 }

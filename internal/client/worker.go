@@ -76,7 +76,34 @@ func (ac *AccrualClient) handleJob(job *Job) error {
 		}
 	}
 
+	if response.NoContentResponse != nil {
+		mu.Lock()
+		RetryAfter = 0
+		mu.Unlock()
+
+		logger.CustomLogger.Debugln(
+			"request to accrual with order "+job.OrderNumber+" was 'no content'. new status",
+			response.NoContentResponse.Status,
+		)
+
+		job.OrderStatus = response.NoContentResponse.Status
+		err = ac.Repository.UpdateOrder(context.Background(), job.OrderNumber, job.OrderStatus, nil)
+		if err != nil {
+			logger.CustomLogger.Errorln(err.Error())
+			jobsChannel <- job
+			return err
+		}
+
+		if job.OrderStatus == order.Processing {
+			jobsChannel <- job
+		}
+	}
+
 	if response.TooManyRequestsResponse != nil {
+		logger.CustomLogger.Debugln(
+			"request to accrual with order "+job.OrderNumber+" was 'too many requests'. RetryAfter:",
+			response.TooManyRequestsResponse.RetryAfter,
+		)
 		mu.Lock()
 		RetryAfter = response.TooManyRequestsResponse.RetryAfter
 		mu.Unlock()
