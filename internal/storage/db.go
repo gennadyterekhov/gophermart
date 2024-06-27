@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"sync"
 
 	"github.com/gennadyterekhov/gophermart/internal/storage/migration"
 
@@ -24,16 +23,36 @@ type QueryMaker interface {
 	Rollback() error
 }
 
-var (
-	db   *DB
-	once sync.Once
-)
+type ConnectionOrTransaction struct {
+	Conn  *sql.DB
+	Tx    *sql.Tx
+	UseTx bool
+}
+
+type DB struct {
+	Connection QueryMaker
+}
 
 func NewDB(dsn string) *DB {
-	once.Do(func() {
-		db = CreateDBStorage(dsn)
-	})
-	return db
+	logger.CustomLogger.Debugln("opening database connection with dsn ", dsn)
+
+	conn, err := sql.Open("pgx", dsn)
+	if err != nil {
+		logger.CustomLogger.Debugln("could not connect to db using dsn: " + dsn + " " + err.Error())
+		panic(err)
+	}
+
+	migration.RunMigrations(conn)
+
+	ct := &ConnectionOrTransaction{
+		Conn:  conn,
+		Tx:    nil,
+		UseTx: false,
+	}
+
+	return &DB{
+		Connection: ct,
+	}
 }
 
 func (ct *ConnectionOrTransaction) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
@@ -100,34 +119,4 @@ func (ct *ConnectionOrTransaction) Rollback() error {
 		return err
 	}
 	return nil
-}
-
-type ConnectionOrTransaction struct {
-	Conn  *sql.DB
-	Tx    *sql.Tx
-	UseTx bool
-}
-
-type DB struct {
-	Connection QueryMaker
-}
-
-func CreateDBStorage(dsn string) *DB {
-	conn, err := sql.Open("pgx", dsn)
-	if err != nil {
-		logger.CustomLogger.Debugln("could not connect to db using dsn: " + dsn + " " + err.Error())
-		panic(err)
-	}
-
-	migration.RunMigrations(conn)
-
-	ct := &ConnectionOrTransaction{
-		Conn:  conn,
-		Tx:    nil,
-		UseTx: false,
-	}
-
-	return &DB{
-		Connection: ct,
-	}
 }
