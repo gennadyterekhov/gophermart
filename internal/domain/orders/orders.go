@@ -79,10 +79,10 @@ func (service *Service) Create(ctx context.Context, reqDto *requests.Orders) err
 		return err
 	}
 
-	_, err = service.AccrualClient.RegisterOrderInAccrual(reqDto.Number)
-	if err != nil {
-		return err
-	}
+	//_, err = service.AccrualClient.RegisterOrderInAccrual(reqDto.Number)
+	//if err != nil {
+	//	return err
+	//}
 
 	err = service.Repository.UpdateOrder(
 		ctx,
