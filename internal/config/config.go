@@ -4,6 +4,8 @@ import (
 	"flag"
 	"os"
 
+	"github.com/joho/godotenv"
+
 	"github.com/gennadyterekhov/gophermart/internal/logger"
 )
 
@@ -65,6 +67,10 @@ func getConfig() *Config {
 }
 
 func overwriteWithEnv(flags *Config) {
+	err := godotenv.Load("../../.env", "../../.env.test")
+	if err != nil {
+		logger.CustomLogger.Errorln("could not load env file", err.Error())
+	}
 	flags.Addr = getAddress(flags.Addr)
 	flags.DBDsn = getDBDsn(flags.DBDsn)
 	flags.AccrualURL = getAccrualURL(flags.AccrualURL)
