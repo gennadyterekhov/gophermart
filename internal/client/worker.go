@@ -100,6 +100,10 @@ func (ac *AccrualClient) handleJob(job *Job) error {
 	}
 
 	if response.TooManyRequestsResponse != nil {
+		logger.CustomLogger.Debugln(
+			"request to accrual with order "+job.OrderNumber+" was 'too many requests'. RetryAfter:",
+			response.TooManyRequestsResponse.RetryAfter,
+		)
 		mu.Lock()
 		RetryAfter = response.TooManyRequestsResponse.RetryAfter
 		mu.Unlock()
