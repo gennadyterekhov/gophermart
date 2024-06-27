@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gennadyterekhov/gophermart/internal/tests/suites/with_server"
+	"github.com/gennadyterekhov/gophermart/internal/tests/suites/server"
 
 	"github.com/stretchr/testify/suite"
 
@@ -17,11 +17,11 @@ import (
 )
 
 type balanceTestSuite struct {
-	with_server.BaseSuiteWithServer
+	server.BaseSuiteWithServer
 }
 
 func (suite *balanceTestSuite) SetupSuite() {
-	with_server.InitBaseSuiteWithServer(suite)
+	server.InitBaseSuiteWithServer(suite)
 }
 
 func TestBalance(t *testing.T) {

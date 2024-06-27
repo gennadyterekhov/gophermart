@@ -1,4 +1,4 @@
-package with_server
+package server
 
 import (
 	"net/http/httptest"

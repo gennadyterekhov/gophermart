@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/gennadyterekhov/gophermart/internal/tests/suites/with_server"
+	"github.com/gennadyterekhov/gophermart/internal/tests/suites/server"
 
 	"github.com/stretchr/testify/suite"
 
@@ -16,12 +16,12 @@ import (
 )
 
 type testSuite struct {
-	with_server.BaseSuiteWithServer
+	server.BaseSuiteWithServer
 }
 
 func TestRegister(t *testing.T) {
 	suiteInstance := &testSuite{}
-	with_server.InitBaseSuiteWithServer(suiteInstance)
+	server.InitBaseSuiteWithServer(suiteInstance)
 	suite.Run(t, suiteInstance)
 }
 
