@@ -23,3 +23,7 @@ vendor/
 .vscode
 
 .env
+cmd/gophermart/server
+.temp
+ci_tests/test.log
+.DS_Store

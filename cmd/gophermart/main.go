@@ -2,16 +2,27 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 
-	"github.com/gennadyterekhov/gophermart/internal/httpui/handlers"
+	"github.com/gennadyterekhov/gophermart/internal/client"
+
+	"github.com/gennadyterekhov/gophermart/internal/app"
+
+	"github.com/gennadyterekhov/gophermart/internal/logger"
 )
 
 func main() {
-	config := getConfig()
-	fmt.Printf("Server started on %v\n", config.Addr)
-	err := http.ListenAndServe(config.Addr, handlers.GetRouter())
+	fmt.Println("gophermart initialization")
+
+	jobsChannel := make(chan *client.Job)
+	appInstance := app.NewApp(jobsChannel)
+
+	fmt.Println("gophermart initialized successfully")
+
+	err := appInstance.StartServer()
+	close(jobsChannel)
+	appInstance.AccrualClient.CloseJobsChannel()
 	if err != nil {
+		logger.CustomLogger.Errorln(err.Error())
 		panic(err)
 	}
 }
