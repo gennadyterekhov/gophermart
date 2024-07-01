@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gennadyterekhov/gophermart/internal/domain/models"
+
 	"github.com/gennadyterekhov/gophermart/internal/tests/suites/base"
 
-	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
 	"github.com/gennadyterekhov/gophermart/internal/repositories"
 	"github.com/stretchr/testify/assert"
@@ -52,7 +53,7 @@ func createDifferentOrders(
 	t *testing.T,
 	repo *repositories.RepositoryMock,
 	userDto *responses.Register,
-) (*order.Order, *order.Order, *order.Order) {
+) (*models.Order, *models.Order, *models.Order) {
 	orderNewest, err := repo.AddOrder(
 		context.Background(),
 		"1",

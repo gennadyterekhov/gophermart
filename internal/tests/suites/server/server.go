@@ -3,6 +3,9 @@ package server
 import (
 	"net/http/httptest"
 
+	"github.com/gennadyterekhov/gophermart/internal/client"
+	"github.com/gennadyterekhov/gophermart/internal/domain/services"
+
 	"github.com/gennadyterekhov/gophermart/internal/config"
 	"github.com/gennadyterekhov/gophermart/internal/httpui/handlers/controllers"
 	"github.com/gennadyterekhov/gophermart/internal/httpui/handlers/router"
@@ -28,9 +31,14 @@ type BaseSuiteWithServer struct {
 }
 
 func InitBaseSuiteWithServer[T BaseSuiteWithServerInterface](srv T) {
+	serverConfig := config.NewConfig()
+	jobsChannel := make(chan *client.Job)
+
 	repo := repositories.NewRepositoryMock()
 	srv.SetRepository(repo)
-	controllersStruct := controllers.NewControllers(config.NewConfig(), repo)
+	accrualClient := client.New(serverConfig.AccrualURL, repo, jobsChannel)
+	servs := services.New(repo, accrualClient)
+	controllersStruct := controllers.NewControllers(servs)
 	srv.SetServer(httptest.NewServer(
 		router.NewRouter(controllersStruct).Router,
 	))

@@ -6,8 +6,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
-
 	"github.com/gennadyterekhov/gophermart/internal/domain/models"
 	"github.com/stretchr/testify/mock"
 )
@@ -17,25 +15,25 @@ type RepositoryMock struct {
 	users                map[int64]*models.User
 	lastUsedUserID       int64
 	lastUsedWithdrawalID int64
-	orders               map[string]*order.Order
+	orders               map[string]*models.Order
 	withdrawals          map[int64]*models.Withdrawal
 }
 
 func (repo *RepositoryMock) Clear() {
 	repo.users = make(map[int64]*models.User)
-	repo.orders = make(map[string]*order.Order)
+	repo.orders = make(map[string]*models.Order)
 	repo.withdrawals = make(map[int64]*models.Withdrawal)
 }
 
 func NewRepositoryMock() *RepositoryMock {
 	return &RepositoryMock{
 		users:       make(map[int64]*models.User),
-		orders:      make(map[string]*order.Order),
+		orders:      make(map[string]*models.Order),
 		withdrawals: make(map[int64]*models.Withdrawal),
 	}
 }
 
-func (repo *RepositoryMock) GetUserByID(ctx context.Context, id int64) (*models.User, error) {
+func (repo *RepositoryMock) GetUserByID(_ context.Context, id int64) (*models.User, error) {
 	user, ok := repo.users[id]
 	if !ok {
 		return nil, nil
@@ -44,7 +42,7 @@ func (repo *RepositoryMock) GetUserByID(ctx context.Context, id int64) (*models.
 	return user, nil
 }
 
-func (repo *RepositoryMock) GetUserByLogin(ctx context.Context, login string) (*models.User, error) {
+func (repo *RepositoryMock) GetUserByLogin(_ context.Context, login string) (*models.User, error) {
 	for _, v := range repo.users {
 		if v.Login == login {
 			return v, nil
@@ -76,8 +74,8 @@ func (repo *RepositoryMock) AddUser(ctx context.Context, login string, password 
 	return user, nil
 }
 
-func (repo *RepositoryMock) GetAllOrdersForUser(ctx context.Context, userID int64) ([]order.Order, error) {
-	ords := make([]order.Order, 0)
+func (repo *RepositoryMock) GetAllOrdersForUser(_ context.Context, userID int64) ([]models.Order, error) {
+	ords := make([]models.Order, 0)
 	for _, v := range repo.orders {
 		if v.UserID == userID {
 			ords = append(ords, *v)
@@ -90,7 +88,7 @@ func (repo *RepositoryMock) GetAllOrdersForUser(ctx context.Context, userID int6
 	return ords, nil
 }
 
-func (repo *RepositoryMock) GetOrderByID(ctx context.Context, number string) (*order.Order, error) {
+func (repo *RepositoryMock) GetOrderByID(_ context.Context, number string) (*models.Order, error) {
 	ord, ok := repo.orders[number]
 	if !ok {
 		return nil, nil
@@ -99,7 +97,7 @@ func (repo *RepositoryMock) GetOrderByID(ctx context.Context, number string) (*o
 	return ord, nil
 }
 
-func (repo *RepositoryMock) GetOrderByIDAndUserID(ctx context.Context, number string, userID int64) (*order.Order, error) {
+func (repo *RepositoryMock) GetOrderByIDAndUserID(_ context.Context, number string, userID int64) (*models.Order, error) {
 	ord, ok := repo.orders[number]
 	if !ok {
 		return nil, nil
@@ -115,14 +113,14 @@ func (repo *RepositoryMock) GetOrderByIDAndUserID(ctx context.Context, number st
 }
 
 func (repo *RepositoryMock) AddOrder(
-	ctx context.Context,
+	_ context.Context,
 	number string,
 	userID int64,
 	status string,
 	accrual *int64,
 	uploadedAt time.Time,
-) (*order.Order, error) {
-	ord := &order.Order{
+) (*models.Order, error) {
+	ord := &models.Order{
 		Number:     number,
 		UserID:     userID,
 		Status:     status,
@@ -135,7 +133,7 @@ func (repo *RepositoryMock) AddOrder(
 }
 
 func (repo *RepositoryMock) UpdateOrder(
-	ctx context.Context,
+	_ context.Context,
 	number string,
 	status string,
 	accrual *int64,
@@ -151,7 +149,7 @@ func (repo *RepositoryMock) UpdateOrder(
 	return nil
 }
 
-func (repo *RepositoryMock) GetAllWithdrawalsForUser(ctx context.Context, userID int64) ([]models.Withdrawal, error) {
+func (repo *RepositoryMock) GetAllWithdrawalsForUser(_ context.Context, userID int64) ([]models.Withdrawal, error) {
 	wdrs := make([]models.Withdrawal, 0)
 	for _, v := range repo.withdrawals {
 		if v.UserID == userID {
@@ -165,13 +163,13 @@ func (repo *RepositoryMock) GetAllWithdrawalsForUser(ctx context.Context, userID
 }
 
 func (repo *RepositoryMock) AddWithdrawal(
-	ctx context.Context,
+	_ context.Context,
 	userID int64,
 	orderNumber string,
 	totalSum int64,
 	processedAt time.Time,
 ) (*models.Withdrawal, error) {
-	repo.lastUsedWithdrawalID += 1
+	repo.lastUsedWithdrawalID++
 	newID := repo.lastUsedWithdrawalID
 	wdr := &models.Withdrawal{
 		ID:          newID,

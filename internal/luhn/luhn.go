@@ -62,7 +62,7 @@ func calculateLuhnSum(number string, parity int) (int64, error) {
 			return 0, fmt.Errorf("invalid digit")
 		}
 
-		d = d - asciiZero
+		d -= asciiZero
 		// Double the value of every second digit.
 		if i%2 == parity {
 			d *= 2

@@ -1,9 +1,7 @@
 package client
 
 import (
-	"sync"
-
-	model "github.com/gennadyterekhov/gophermart/internal/domain/models/order"
+	"github.com/gennadyterekhov/gophermart/internal/domain/models"
 )
 
 type Job struct {
@@ -14,34 +12,12 @@ type Job struct {
 	Error              error
 }
 
-var (
-	jobsChannel chan *Job
-	once        sync.Once
-	RetryAfter  int64
-	mu          sync.Mutex // maybe use atomics https://github.com/gennadyterekhov/gophermart/issues/24
-)
-
-func (ac *AccrualClient) initializeChannel() {
-	jobsChannel = make(chan *Job)
-
-	createWorkers()
-	go func() {
-		ac.workerPool()
-	}()
-}
-
-func (ac *AccrualClient) LaunchAutoUpdate(order *model.Order) {
-	once.Do(ac.initializeChannel)
-	job := createJob(order)
-
-	go func(job *Job) {
-		jobsChannel <- job
-	}(job)
-}
-
-func createJob(order *model.Order) *Job {
+func (ac *AccrualClient) LaunchAutoUpdate(order *models.Order) {
 	job := &Job{
 		OrderNumber: order.Number,
 	}
-	return job
+
+	go func(job *Job) {
+		ac.JobsChannel <- job
+	}(job)
 }

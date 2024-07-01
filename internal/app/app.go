@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gennadyterekhov/gophermart/internal/domain/services"
+
+	"github.com/gennadyterekhov/gophermart/internal/client"
+
 	"github.com/gennadyterekhov/gophermart/internal/httpui/handlers/controllers"
 
 	"github.com/gennadyterekhov/gophermart/internal/httpui/handlers/router"
@@ -15,23 +19,28 @@ import (
 )
 
 type GophermartApp struct {
-	ServerConfig *config.Config
-	DB           *storage.DB
-	Router       *router.Router
+	ServerConfig  *config.Config
+	DB            *storage.DB
+	Router        *router.Router
+	AccrualClient *client.AccrualClient
 }
 
-func NewApp() *GophermartApp {
+func NewApp(jobsChannel chan *client.Job) *GophermartApp {
+	app := &GophermartApp{}
+
 	serverConfig := config.NewConfig()
+
 	db := storage.NewDB(serverConfig.DBDsn)
 	repo := repositories.NewRepository(db)
-	controllersStruct := controllers.NewControllers(serverConfig, repo)
+	app.AccrualClient = client.New(serverConfig.AccrualURL, repo, jobsChannel)
+
+	servs := services.New(repo, app.AccrualClient)
+	controllersStruct := controllers.NewControllers(servs)
 	routerInstance := router.NewRouter(controllersStruct)
 
-	app := &GophermartApp{
-		ServerConfig: serverConfig,
-		DB:           db,
-		Router:       routerInstance,
-	}
+	app.ServerConfig = serverConfig
+	app.DB = db
+	app.Router = routerInstance
 
 	return app
 }

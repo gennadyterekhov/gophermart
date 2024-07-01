@@ -5,10 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gennadyterekhov/gophermart/internal/domain/models"
+
 	"github.com/gennadyterekhov/gophermart/internal/tests/suites/base"
 
 	"github.com/gennadyterekhov/gophermart/internal/client"
-	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
 	"github.com/gennadyterekhov/gophermart/internal/domain/responses"
 	"github.com/gennadyterekhov/gophermart/internal/httpui/middleware"
 	"github.com/stretchr/testify/assert"
@@ -20,16 +21,24 @@ type testSuite struct {
 	Service Service
 }
 
-func newSuite() *testSuite {
+func newSuite(jobsChannel chan *client.Job) *testSuite {
 	suiteInstance := &testSuite{}
 	base.InitBaseSuite(suiteInstance)
-	suiteInstance.Service = NewService(suiteInstance.GetRepository(), client.NewClient("", suiteInstance.GetRepository()))
+	accrualClient := client.New(
+		"",
+		suiteInstance.GetRepository(),
+		jobsChannel,
+	)
+	suiteInstance.Service = NewService(suiteInstance.GetRepository(), accrualClient)
 
 	return suiteInstance
 }
 
 func TestDomainOrders(t *testing.T) {
-	suite.Run(t, newSuite())
+	jobsChannel := make(chan *client.Job)
+	suite.Run(t, newSuite(jobsChannel))
+
+	close(jobsChannel)
 }
 
 func (suite *testSuite) TestCanGetOrders() {
@@ -62,7 +71,7 @@ func (suite *testSuite) TestCanOrderStatusIsAutomaticallyUpdated() {
 
 func (suite *testSuite) createDifferentOrders(
 	userDto *responses.Register,
-) (*order.Order, *order.Order, *order.Order) {
+) (*models.Order, *models.Order, *models.Order) {
 	var ten int64 = 10
 	withdrawalNewest, err := suite.Service.Repository.AddOrder(
 		context.Background(),

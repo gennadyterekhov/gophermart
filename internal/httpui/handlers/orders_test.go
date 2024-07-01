@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gennadyterekhov/gophermart/internal/domain/models"
+
 	"github.com/gennadyterekhov/gophermart/internal/tests/suites/server"
 
 	"github.com/stretchr/testify/suite"
-
-	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -61,7 +61,7 @@ func (suite *ordersTestSuite) TestCanSendOrdersRequest() {
 	)
 
 	require.Equal(suite.T(), http.StatusOK, responseStatusCode)
-	responseBody := make([]order.OrderFloats, 0)
+	responseBody := make([]models.OrderFloats, 0)
 
 	err = json.Unmarshal(bodyAsBytes, &responseBody)
 	assert.NoError(suite.T(), err)

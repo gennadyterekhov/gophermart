@@ -25,7 +25,7 @@ func Luhn(next http.Handler) http.Handler {
 
 		var number string
 		if req.Header.Get("Content-Type") == "text/plain" {
-			number, err = getNumberFromTextBody(reqBody)
+			number = getNumberFromTextBody(reqBody)
 		} else {
 			number, err = getNumberFromJSONBody(reqBody)
 		}
@@ -47,8 +47,8 @@ func Luhn(next http.Handler) http.Handler {
 	})
 }
 
-func getNumberFromTextBody(reqBody []byte) (string, error) {
-	return string(reqBody), nil
+func getNumberFromTextBody(reqBody []byte) string {
+	return string(reqBody)
 }
 
 func getNumberFromJSONBody(reqBody []byte) (string, error) {
