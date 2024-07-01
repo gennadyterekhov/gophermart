@@ -9,20 +9,7 @@ import (
 	"github.com/gennadyterekhov/gophermart/internal/logger"
 )
 
-type Worker struct{}
-
 const numberOfWorkers = 4
-
-var workers []Worker
-
-func createWorkers() {
-	workers = make([]Worker, 0)
-	workers = append(workers, *createWorker())
-}
-
-func createWorker() *Worker {
-	return &Worker{}
-}
 
 func (ac *AccrualClient) handleJob(job *Job) error {
 	if job == nil {
@@ -32,9 +19,9 @@ func (ac *AccrualClient) handleJob(job *Job) error {
 
 	var retryAfter int64
 
-	mu.Lock()
-	retryAfter = RetryAfter
-	mu.Unlock()
+	ac.mu.Lock()
+	retryAfter = ac.RetryAfter
+	ac.mu.Unlock()
 
 	if retryAfter > 0 {
 		logger.CustomLogger.Debugln("sleeping for", retryAfter)
@@ -47,9 +34,9 @@ func (ac *AccrualClient) handleJob(job *Job) error {
 	}
 
 	if response.CorrectResponse != nil {
-		mu.Lock()
-		RetryAfter = 0
-		mu.Unlock()
+		ac.mu.Lock()
+		ac.RetryAfter = 0
+		ac.mu.Unlock()
 
 		logger.CustomLogger.Debugln(
 			"request to accrual with order "+job.OrderNumber+" was successful. new status",
@@ -67,19 +54,19 @@ func (ac *AccrualClient) handleJob(job *Job) error {
 
 		if err != nil {
 			logger.CustomLogger.Errorln(err.Error())
-			jobsChannel <- job
+			ac.JobsChannel <- job
 			return err
 		}
 
 		if job.OrderStatus == order.Processing {
-			jobsChannel <- job
+			ac.JobsChannel <- job
 		}
 	}
 
 	if response.NoContentResponse != nil {
-		mu.Lock()
-		RetryAfter = 0
-		mu.Unlock()
+		ac.mu.Lock()
+		ac.RetryAfter = 0
+		ac.mu.Unlock()
 
 		logger.CustomLogger.Debugln(
 			"request to accrual with order "+job.OrderNumber+" was 'no content'. new status",
@@ -90,12 +77,12 @@ func (ac *AccrualClient) handleJob(job *Job) error {
 		err = ac.Repository.UpdateOrder(context.Background(), job.OrderNumber, job.OrderStatus, nil)
 		if err != nil {
 			logger.CustomLogger.Errorln(err.Error())
-			jobsChannel <- job
+			ac.JobsChannel <- job
 			return err
 		}
 
 		if job.OrderStatus == order.Processing {
-			jobsChannel <- job
+			ac.JobsChannel <- job
 		}
 	}
 
@@ -104,10 +91,10 @@ func (ac *AccrualClient) handleJob(job *Job) error {
 			"request to accrual with order "+job.OrderNumber+" was 'too many requests'. RetryAfter:",
 			response.TooManyRequestsResponse.RetryAfter,
 		)
-		mu.Lock()
-		RetryAfter = response.TooManyRequestsResponse.RetryAfter
-		mu.Unlock()
-		jobsChannel <- job
+		ac.mu.Lock()
+		ac.RetryAfter = response.TooManyRequestsResponse.RetryAfter
+		ac.mu.Unlock()
+		ac.JobsChannel <- job
 	}
 
 	return nil
@@ -116,7 +103,7 @@ func (ac *AccrualClient) handleJob(job *Job) error {
 func (ac *AccrualClient) workerPool() {
 	for w := 0; w < numberOfWorkers; w++ {
 		go func() {
-			for j := range jobsChannel {
+			for j := range ac.JobsChannel {
 				err := ac.handleJob(j)
 				if err != nil {
 					logger.CustomLogger.Errorln("error in worker", err.Error())

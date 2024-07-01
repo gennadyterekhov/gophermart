@@ -3,15 +3,15 @@ package serializers
 import (
 	"encoding/json"
 
-	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
+	"github.com/gennadyterekhov/gophermart/internal/domain/models"
 )
 
-func Orders(resDto *[]order.Order) ([]byte, error) {
-	resDtoWithFloats := make([]order.OrderFloats, 0)
+func Orders(resDto *[]models.Order) ([]byte, error) {
+	resDtoWithFloats := make([]models.OrderFloats, 0)
 
 	for i := range *resDto {
 		if (*resDto)[i].Accrual == nil {
-			resDtoWithFloats = append(resDtoWithFloats, order.OrderFloats{
+			resDtoWithFloats = append(resDtoWithFloats, models.OrderFloats{
 				Number:     (*resDto)[i].Number,
 				Status:     (*resDto)[i].Status,
 				UploadedAt: (*resDto)[i].UploadedAt,
@@ -19,7 +19,7 @@ func Orders(resDto *[]order.Order) ([]byte, error) {
 			continue
 		}
 		accrualFloat := float64(*(*resDto)[i].Accrual) / 100
-		resDtoWithFloats = append(resDtoWithFloats, order.OrderFloats{
+		resDtoWithFloats = append(resDtoWithFloats, models.OrderFloats{
 			Number:     (*resDto)[i].Number,
 			Status:     (*resDto)[i].Status,
 			UploadedAt: (*resDto)[i].UploadedAt,

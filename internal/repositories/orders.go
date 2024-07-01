@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
+	"github.com/gennadyterekhov/gophermart/internal/domain/models"
 )
 
-func (repo *Repository) GetAllOrdersForUser(ctx context.Context, userID int64) ([]order.Order, error) {
+func (repo *Repository) GetAllOrdersForUser(ctx context.Context, userID int64) ([]models.Order, error) {
 	const query = `SELECT 
     			       number, user_id, status, accrual, uploaded_at
 				   FROM orders 
@@ -20,10 +20,10 @@ func (repo *Repository) GetAllOrdersForUser(ctx context.Context, userID int64) (
 
 	defer rows.Close()
 
-	orders := make([]order.Order, 0)
+	orders := make([]models.Order, 0)
 
 	for rows.Next() {
-		order := order.Order{}
+		order := models.Order{}
 		err = rows.Scan(&(order.Number), &(order.UserID), &(order.Status), &(order.Accrual), &(order.UploadedAt))
 		if err != nil {
 			return nil, err
@@ -39,14 +39,14 @@ func (repo *Repository) GetAllOrdersForUser(ctx context.Context, userID int64) (
 	return orders, nil
 }
 
-func (repo *Repository) GetOrderByID(ctx context.Context, number string) (*order.Order, error) {
+func (repo *Repository) GetOrderByID(ctx context.Context, number string) (*models.Order, error) {
 	const query = `SELECT number, user_id, status, accrual, uploaded_at FROM orders WHERE number = $1`
 	row := repo.DB.Connection.QueryRowContext(ctx, query, number)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
 
-	order := order.Order{}
+	order := models.Order{}
 	err := row.Scan(&(order.Number), &(order.UserID), &(order.Status), &(order.Accrual), &(order.UploadedAt))
 	if err != nil {
 		return nil, err
@@ -55,14 +55,14 @@ func (repo *Repository) GetOrderByID(ctx context.Context, number string) (*order
 	return &order, nil
 }
 
-func (repo *Repository) GetOrderByIDAndUserID(ctx context.Context, number string, userID int64) (*order.Order, error) {
+func (repo *Repository) GetOrderByIDAndUserID(ctx context.Context, number string, userID int64) (*models.Order, error) {
 	const query = `SELECT number, user_id, status, accrual, uploaded_at FROM orders WHERE number = $1 and user_id = $2`
 	row := repo.DB.Connection.QueryRowContext(ctx, query, number, userID)
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
 
-	order := order.Order{}
+	order := models.Order{}
 	err := row.Scan(&(order.Number), &(order.UserID), &(order.Status), &(order.Accrual), &(order.UploadedAt))
 	if err != nil {
 		return nil, err
@@ -78,7 +78,7 @@ func (repo *Repository) AddOrder(
 	status string,
 	accrual *int64,
 	uploadedAt time.Time,
-) (*order.Order, error) {
+) (*models.Order, error) {
 	const query = `INSERT INTO orders (number, user_id, status, accrual, uploaded_at)
 			values ($1, $2, $3, $4, $5) RETURNING number;`
 
@@ -87,7 +87,7 @@ func (repo *Repository) AddOrder(
 		return nil, err
 	}
 
-	order := order.Order{
+	order := models.Order{
 		Number:     number,
 		UserID:     userID,
 		Status:     status,

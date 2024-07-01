@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gennadyterekhov/gophermart/internal/domain/models"
+
 	"github.com/gennadyterekhov/gophermart/internal/client"
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
@@ -22,17 +24,17 @@ const (
 
 type Service struct {
 	Repository    repositories.RepositoryInterface
-	AccrualClient client.AccrualClient
+	AccrualClient *client.AccrualClient
 }
 
-func NewService(repo repositories.RepositoryInterface, cl client.AccrualClient) Service {
+func NewService(repo repositories.RepositoryInterface, cl *client.AccrualClient) Service {
 	return Service{
 		Repository:    repo,
 		AccrualClient: cl,
 	}
 }
 
-func (service *Service) GetAll(ctx context.Context) (*[]order.Order, error) {
+func (service *Service) GetAll(ctx context.Context) (*[]models.Order, error) {
 	userID, ok := ctx.Value(middleware.ContextUserIDKey).(int64)
 	if !ok {
 		return nil, fmt.Errorf("cannot get user_id from context")
@@ -50,13 +52,14 @@ func (service *Service) GetAll(ctx context.Context) (*[]order.Order, error) {
 	return &orders, nil
 }
 
+// Create creates order and launches auto update through accrual
 func (service *Service) Create(ctx context.Context, reqDto *requests.Orders) error {
 	var err error
 	userID, ok := ctx.Value(middleware.ContextUserIDKey).(int64)
 	if !ok {
 		return fmt.Errorf("cannot get user_id from context")
 	}
-	var orderObj *order.Order
+	var orderObj *models.Order
 	orderObj, err = service.Repository.GetOrderByIDAndUserID(ctx, reqDto.Number, userID)
 	if err == nil && orderObj != nil {
 		return fmt.Errorf(ErrorNumberAlreadyUploaded)

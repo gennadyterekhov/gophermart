@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gennadyterekhov/gophermart/internal/domain/models"
+
 	"github.com/gennadyterekhov/gophermart/internal/tests/suites/base"
 
 	"github.com/gennadyterekhov/gophermart/internal/luhn"
@@ -166,7 +168,7 @@ func (suite *testSuite) TestInternalServerError() {
 	suite.T().Skipf("cannot test")
 }
 
-func (suite *testSuite) createOrder(userDto *responses.Register, number string) *order.Order {
+func (suite *testSuite) createOrder(userDto *responses.Register, number string) *models.Order {
 	var ten int64 = 10
 	orderNewest, err := suite.Repository.AddOrder(
 		context.Background(),

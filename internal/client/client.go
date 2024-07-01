@@ -6,12 +6,18 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/models/order"
 
 	"github.com/gennadyterekhov/gophermart/internal/repositories"
 
 	"github.com/go-resty/resty/v2"
+)
+
+const (
+	ErrorInternal        = "internal server error"
+	ErrorUnknownResponse = "unknown response"
 )
 
 type AccrualClientResponse struct {
@@ -36,22 +42,31 @@ type TooManyRequestsResponse struct {
 }
 
 type AccrualClient struct {
-	AccrualURL string
-	Repository repositories.RepositoryInterface
+	AccrualURL       string
+	Repository       repositories.RepositoryInterface
+	JobsChannel      chan *Job
+	CloseJobsChannel func()
+	RetryAfter       int64
+	mu               sync.Mutex // maybe use atomics https://github.com/gennadyterekhov/gophermart/issues/24
 }
 
-func NewClient(url string, repo repositories.RepositoryInterface) AccrualClient {
-	return AccrualClient{
+func New(url string, repo repositories.RepositoryInterface, ch chan *Job) *AccrualClient {
+	instance := AccrualClient{
 		AccrualURL: url,
 		Repository: repo,
 	}
-}
 
-const (
-	ErrorNoContent       = "order is not registered"
-	ErrorInternal        = "internal server error"
-	ErrorUnknownResponse = "unknown response"
-)
+	instance.JobsChannel = ch
+	instance.CloseJobsChannel = func() {
+		close(instance.JobsChannel)
+	}
+
+	go func() {
+		instance.workerPool()
+	}()
+
+	return &instance
+}
 
 func (ac *AccrualClient) GetStatus(number string) (*AccrualClientResponse, error) {
 	var err error
@@ -83,12 +98,9 @@ func (ac *AccrualClient) GetStatus(number string) (*AccrualClientResponse, error
 		return responseDto, nil
 	}
 	if statusCode == http.StatusNoContent {
-		correctResponse, err := processNoContentResponse(response)
-		if err != nil {
-			return nil, err
-		}
+		correctResponse := processNoContentResponse()
 		responseDto.NoContentResponse = correctResponse
-		return responseDto, nil // fmt.Errorf(ErrorNoContent)
+		return responseDto, nil
 	}
 	if statusCode == http.StatusInternalServerError {
 		return responseDto, fmt.Errorf(ErrorInternal)
@@ -134,11 +146,11 @@ func processSuccessfulResponse(response *resty.Response) (*CorrectResponse, erro
 	return responseDto, nil
 }
 
-func processNoContentResponse(response *resty.Response) (*NoContentResponse, error) {
+func processNoContentResponse() *NoContentResponse {
 	responseDto := &NoContentResponse{}
 	responseDto.Status = order.New
 
-	return responseDto, nil
+	return responseDto
 }
 
 func process409Response(response *resty.Response) (*TooManyRequestsResponse, error) {
