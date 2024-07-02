@@ -52,7 +52,7 @@ jobs:
 
       - name: Test
         run: |
-          (GOOSE_MIGRATION_DIR="internal/storage/migrations" GOOSE_DRIVER=postgres GOOSE_DBSTRING="postgresql://postgres:postgres@postgres/praktikum?sslmode=disable" goose up)
+          (GOOSE_MIGRATION_DIR="internal/storage/migrations" GOOSE_DRIVER=postgres GOOSE_DBSTRING="postgresql://postgres:postgres@postgres/praktikum?sslmode=disable" ./cmd/goose up)
           gophermarttest \
             -test.v -test.run=^TestGophermart$ \
             -gophermart-binary-path=cmd/gophermart/gophermart \
