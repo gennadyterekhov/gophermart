@@ -25,12 +25,28 @@ or
 
       psql -U gophermart_user -d gophermart_db_test
 
-## tests
-run 1 suite:
-go test -run=TestOrders$ ./...
+#### migrations
 
-run 1 test method in suite
-go test -run=TestOrders/Test200IfAlreadyUploaded ./...
+create new migration  
+
+      goose -dir internal/storage/migrations create new_table_users sql
+      GOOSE_MIGRATION_DIR="internal/storage/migrations" goose create new_table_orders sql
+      GOOSE_MIGRATION_DIR="internal/storage/migrations" goose create new_table_withdrawals sql
+
+run all migrations (real and test db)  
+
+      GOOSE_MIGRATION_DIR="internal/storage/migrations" GOOSE_DRIVER=postgres GOOSE_DBSTRING="postgresql://gophermart_user:gophermart_pass@127.0.0.1:5432/gophermart_db_test?sslmode=disable" goose up
+
+
+
+## tests
+run 1 suite:  
+
+      go test -run=TestOrders$ ./...
+
+run 1 test method in suite  
+
+      go test -run=TestOrders/Test200IfAlreadyUploaded ./...
 
 run tests and save stdout and stderr to file
 go test ./... > .temp/test.log 2>&1

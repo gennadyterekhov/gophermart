@@ -4,8 +4,6 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/gennadyterekhov/gophermart/internal/storage/migration"
-
 	"github.com/gennadyterekhov/gophermart/internal/logger"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
@@ -32,8 +30,6 @@ func NewDB(dsn string) *DB {
 		logger.CustomLogger.Debugln("could not connect to db using dsn: " + dsn + " " + err.Error())
 		panic(err)
 	}
-
-	migration.RunMigrations(conn)
 
 	return &DB{
 		Connection: conn,
