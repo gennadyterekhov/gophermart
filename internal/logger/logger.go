@@ -1,17 +1,45 @@
 package logger
 
 import (
-	"go.uber.org/zap"
+	"fmt"
+
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
-var ZapSugarLogger zap.SugaredLogger
+type CustomLoggerType struct{}
 
-func init() {
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		panic(err)
+// deprecated
+var CustomLogger *CustomLoggerType
+
+func NewLogger() *CustomLoggerType {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+
+	return &CustomLoggerType{}
+}
+
+func Init() {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+}
+
+func (cl *CustomLoggerType) Debugln(msg ...interface{}) {
+	log.Debug().Msg(makeMessage(msg))
+}
+
+func (cl *CustomLoggerType) Infoln(msg ...string) {
+	log.Info().Msg(makeMessage(msg))
+}
+
+func (cl *CustomLoggerType) Errorln(msg ...string) {
+	log.Error().Msg(makeMessage(msg))
+}
+
+func makeMessage(msg ...interface{}) string {
+	fullMessage := ""
+	for _, m := range msg {
+		fullMessage += fmt.Sprintf("%v ", m)
 	}
-	defer logger.Sync()
-
-	ZapSugarLogger = *logger.Sugar()
+	return fullMessage
 }
