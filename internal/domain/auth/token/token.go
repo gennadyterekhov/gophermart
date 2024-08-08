@@ -5,12 +5,13 @@ import (
 	"os"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/gennadyterekhov/gophermart/internal/logger"
 
 	"github.com/gennadyterekhov/gophermart/internal/domain/auth/jwtclaims"
 	"github.com/gennadyterekhov/gophermart/internal/domain/models"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/pkg/errors"
 )
 
 const issuerGophermart = "gophermart"
